@@ -28,6 +28,7 @@ app.config[
 )
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
+app.config ['JSON_SORT_KEYS'] = False
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
@@ -36,6 +37,7 @@ migrate = Migrate(app, db)
 # enable CORS
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+
 # import models
 from models import *
 
@@ -43,6 +45,7 @@ from models import *
 user_schema = UserSchema()
 list_schema = ListSchema()
 list_item_schema = ListItemSchema()
+
 
 @app.route("/", methods=["GET"])
 def index():
@@ -62,3 +65,5 @@ def index():
 
 if __name__ == "__main__":
     app.run()
+
+# export FLASK_ENV=development
