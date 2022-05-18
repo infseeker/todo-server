@@ -1,10 +1,13 @@
-from datetime import datetime
-from email.policy import default
 from app import db
-
+from app import ma
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 
 class User(db.Model):
     __tablename__ = "users"
+    __table_args__ = (
+        db.UniqueConstraint('username', 'email', 'social_id', name='users_unique_fields'),
+    )
+
     id = db.Column("user_id", db.Integer, primary_key=True, nullable=False)
     name = db.Column("username", db.String(32), nullable=False)
     password = db.Column(db.String(32), nullable=False)
@@ -13,8 +16,13 @@ class User(db.Model):
     social_id = db.Column(db.String(256))
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
-    updated = db.Column(db.DateTime, nullable=False, server_default=db.func.now(), server_onupdate=db.func.now())
-    is_deleted = db.Column(db.Boolean, nullable=False)
+    updated = db.Column(
+        db.DateTime,
+        nullable=False,
+        server_default=db.func.now(),
+        server_onupdate=db.func.now(),
+    )
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(
         self,
@@ -23,70 +31,78 @@ class User(db.Model):
         password=None,
         user_image_path=None,
         social_id=None,
-        is_admin=False,
-        created=None,
-        is_deleted=False,
     ):
         self.name = name
         self.email = email
         self.password = password
         self.user_image_path = user_image_path
         self.social_id = social_id
-        self.is_admin = is_admin
-        self.created = created
-        self.is_deleted = is_deleted
 
+
+class UserSchema(SQLAlchemyAutoSchema):
+  class Meta:
+    model = User
 
 class List(db.Model):
+
     __tablename__ = "lists"
     id = db.Column("list_id", db.Integer, primary_key=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
-    name = db.Column(db.Text, nullable=False)
-    is_liked = db.Column(db.Boolean, nullable=False)
-    position = db.Column(db.Integer)
+    title = db.Column(db.Text, nullable=False, default="New List")
+    is_liked = db.Column(db.Boolean, nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
-    updated = db.Column(db.DateTime, nullable=False, server_default=db.func.now(), server_onupdate=db.func.now())
-    is_deleted = db.Column(db.Boolean)
+    updated = db.Column(
+        db.DateTime,
+        nullable=False,
+        server_default=db.func.now(),
+        server_onupdate=db.func.now(),
+    )
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
-    def __init__(
-        self,
-        name=None,
-        is_liked=False,
-        position=0,
-        created=None,
-        is_deleted=False,
-    ):
-        self.name = name
+    def __init__(self, title=None, is_liked=False):
+        self.title = title
         self.is_liked = is_liked
-        self.position = position
-        self.created = created
-        self.is_deleted = is_deleted
 
+
+class ListSchema(SQLAlchemyAutoSchema):
+  class Meta:
+    model = List
+    include_fk = True
 
 class ListItem(db.Model):
     __tablename__ = "list_items"
+
     id = db.Column("list_item_id", db.Integer, primary_key=True, nullable=False)
     list_id = db.Column(db.Integer, db.ForeignKey(List.id), nullable=False)
-    name = db.Column(db.Text)
-    is_done = db.Column(db.Boolean)
-    is_liked = db.Column(db.Boolean)
-    position = db.Column(db.Integer)
+    title = db.Column(db.Text, nullable=False, default="New List Item")
+    is_done = db.Column(db.Boolean, nullable=False, default=False)
+    is_liked = db.Column(db.Boolean, nullable=False, default=False)
+    position = db.Column(db.Float, nullable=False, default=0)
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
-    updated = db.Column(db.DateTime, nullable=False, server_default=db.func.now(), server_onupdate=db.func.now())
-    is_deleted = db.Column(db.Boolean)
+    updated = db.Column(
+        db.DateTime,
+        nullable=False,
+        server_default=db.func.now(),
+        server_onupdate=db.func.now(),
+    )
+    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(
         self,
-        name=None,
+        title=None,
         is_done=False,
         is_liked=False,
         position=0,
-        created=None,
         is_deleted=False,
     ):
-        self.name = name
+        self.title = title
         self.is_done = is_done
         self.is_liked = is_liked
         self.position = position
-        self.created = created
         self.is_deleted = is_deleted
+
+
+class ListItemSchema(SQLAlchemyAutoSchema):
+  class Meta:
+    model = ListItem
+    include_fk = True
