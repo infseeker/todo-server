@@ -37,7 +37,7 @@ from models import *
 
 @app.route("/", methods=["GET"])
 def index():
-    return "Hello!"
+    return "Privet!"
 
 
 if __name__ == "__main__":
