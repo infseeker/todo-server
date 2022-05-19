@@ -1,12 +1,20 @@
 import os
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from flask_migrate import Migrate
 from flask_cors import CORS
-
+from flask_login import (
+    LoginManager,
+    UserMixin,
+    current_user,
+    login_required,
+    login_user,
+    logout_user,
+)
+from flask_wtf.csrf import CSRFProtect, generate_csrf
 
 # configuration
 DEBUG = True
@@ -32,8 +40,8 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 migrate = Migrate(app, db)
 
-# enable CORS
-CORS(app, resources={r"/*": {"origins": "*"}})
+# auth
+from auth import *
 
 # init api
 from api import *
