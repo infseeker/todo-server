@@ -42,4 +42,5 @@ class ListItemSchema(SQLAlchemyAutoSchema):
         include_fk = True
         ordered = True
 
+
 list_item_schema = ListItemSchema()

@@ -30,4 +30,5 @@ class ListSchema(SQLAlchemyAutoSchema):
         include_fk = True
         ordered = True
 
+
 list_schema = ListSchema()

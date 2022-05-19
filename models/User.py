@@ -5,9 +5,7 @@ from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 class User(db.Model):
     __tablename__ = "users"
     __table_args__ = (
-        db.UniqueConstraint(
-            "name", "email", "social_id", name="users_unique_fields"
-        ),
+        db.UniqueConstraint("name", "email", "social_id", name="users_unique_fields"),
     )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -45,5 +43,6 @@ class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = User
         ordered = True
+
 
 user_schema = UserSchema()

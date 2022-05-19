@@ -26,7 +26,7 @@ app.config[
 )
 
 app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config ['JSON_SORT_KEYS'] = False
+app.config["JSON_SORT_KEYS"] = False
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
