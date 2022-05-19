@@ -15,7 +15,7 @@ DEBUG = True
 app = Flask(__name__)
 app.config.from_object(__name__)
 
-# database connection string
+# data handling
 app.config[
     "SQLALCHEMY_DATABASE_URI"
 ] = "postgresql://{db_user_name}:{db_user_password}@{db_host}/{db_name}".format(
@@ -35,8 +35,16 @@ migrate = Migrate(app, db)
 # enable CORS
 CORS(app, resources={r"/*": {"origins": "*"}})
 
+# init api
 from api import *
 
+
+@app.route("/", methods=["GET"])
+def index():
+    return "ToDo Project API"
+
+
+# run app
 if __name__ == "__main__":
     app.run()
 
