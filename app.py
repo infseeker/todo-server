@@ -48,4 +48,7 @@ def index():
 if __name__ == "__main__":
     app.run()
 
+
+# source env/bin/activate
 # export FLASK_ENV=development
+# flask run --host=0.0.0.0
