@@ -5,7 +5,6 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from flask_migrate import Migrate
-
 from flask_cors import CORS
 
 
@@ -14,7 +13,6 @@ DEBUG = True
 
 # instantiate the app
 app = Flask(__name__)
-
 app.config.from_object(__name__)
 
 # database connection string
@@ -37,31 +35,7 @@ migrate = Migrate(app, db)
 # enable CORS
 CORS(app, resources={r"/*": {"origins": "*"}})
 
-
-# import models
-from models import *
-
-# model schemas
-user_schema = UserSchema()
-list_schema = ListSchema()
-list_item_schema = ListItemSchema()
-
-
-@app.route("/", methods=["GET"])
-def index():
-    test_user = User("someUser", "mail@mail.com", "asdf", "/some/path", 123)
-    db.session.add(test_user)
-
-    try:
-      db.session.commit()
-    except:
-      db.session.rollback()
-
-      duplicate_user = User.query.filter_by(email="mail@mail.com").first()
-      return user_schema.dump(duplicate_user)
-    
-    return user_schema.dump(test_user)
-
+from api import *
 
 if __name__ == "__main__":
     app.run()
