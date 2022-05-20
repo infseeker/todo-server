@@ -1,6 +1,6 @@
 from app import app, db
-from models.List import *
-from models.ListItem import *
+from ..models.List import *
+from ..models.ListItem import *
 
 
 @app.route("/todo/api/lists", methods=["GET"])

@@ -45,4 +45,6 @@ class UserSchema(SQLAlchemyAutoSchema):
         ordered = True
 
 
-user_schema = UserSchema()
+user_schema = UserSchema(
+    exclude=["password", "is_admin", "created", "updated", "is_deleted"]
+)

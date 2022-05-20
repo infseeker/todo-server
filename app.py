@@ -3,18 +3,8 @@ import os
 from flask import Flask, request
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
 from flask_migrate import Migrate
-from flask_cors import CORS
-from flask_login import (
-    LoginManager,
-    UserMixin,
-    current_user,
-    login_required,
-    login_user,
-    logout_user,
-)
-from flask_wtf.csrf import CSRFProtect, generate_csrf
+
 
 # configuration
 DEBUG = True
@@ -40,16 +30,14 @@ db = SQLAlchemy(app)
 ma = Marshmallow(app)
 migrate = Migrate(app, db)
 
-# auth
-from auth import *
 
 # init api
-from api import *
+from src.api import *
 
 
 @app.route("/", methods=["GET"])
 def index():
-    return "ToDo Project API"
+    return 'ToDo Project API'
 
 
 # run app

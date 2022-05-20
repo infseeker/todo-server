@@ -1,6 +1,6 @@
 from app import db
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
-from models.User import User
+from ..models.User import User
 
 
 class List(db.Model):
@@ -31,4 +31,4 @@ class ListSchema(SQLAlchemyAutoSchema):
         ordered = True
 
 
-list_schema = ListSchema()
+list_schema = ListSchema(exclude=["created", "updated", "is_deleted"])

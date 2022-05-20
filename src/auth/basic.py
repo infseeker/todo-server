@@ -14,6 +14,7 @@ from flask_login import (
 )
 from flask_wtf.csrf import CSRFProtect, generate_csrf
 from app import app, db
+from ..models.User import *
 
 app.config.update(
     DEBUG=True,
@@ -27,10 +28,13 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.session_protection = "strong"
 
-csrf = CSRFProtect(app)
+# csrf = CSRFProtect(app)
 cors = CORS(
     app,
     resources={r"*": {"origins": "http://localhost:3000"}},
     expose_headers=["Content-Type", "X-CSRFToken"],
     supports_credentials=True,
 )
+
+def get_user_by_name(username: str):
+    return User.query.filter_by(name = username).first()

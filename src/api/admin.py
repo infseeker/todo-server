@@ -1,7 +1,7 @@
 from app import app, db
-from models.User import *
-from models.List import *
-from models.ListItem import *
+from ..models.User import *
+from ..models.List import *
+from ..models.ListItem import *
 
 
 @app.route("/todo/api/admin/users", methods=["GET"])
@@ -44,7 +44,9 @@ def update_user_list(user_id, list_id):
     return f"api [admin]: update list {list_id} of user {user_id}"
 
 
-@app.route("/todo/api/admin/users/<int:user_id>/lists/<int:list_id>", methods=["DELETE"])
+@app.route(
+    "/todo/api/admin/users/<int:user_id>/lists/<int:list_id>", methods=["DELETE"]
+)
 def delete_user_list(user_id, list_id):
     return f"api [admin]: delete list {list_id} of user {user_id}"
 
@@ -54,11 +56,17 @@ def create_user_list_item(user_id, list_id):
     return f"api [admin]: create item for list {list_id} of user {user_id}"
 
 
-@app.route("/todo/api/admin/users/<int:user_id>/lists/<int:list_id>/<int:list_item_id>", methods=["PUT"])
+@app.route(
+    "/todo/api/admin/users/<int:user_id>/lists/<int:list_id>/<int:list_item_id>",
+    methods=["PUT"],
+)
 def update_user_list_item(user_id, list_id, list_item_id):
     return f"api [admin]: update list item {list_item_id} for list {list_id} of user {user_id}"
 
 
-@app.route("/todo/api/admin/users/<int:user_id>/lists/<int:list_id>/<int:list_item_id>", methods=["DELETE"])
+@app.route(
+    "/todo/api/admin/users/<int:user_id>/lists/<int:list_id>/<int:list_item_id>",
+    methods=["DELETE"],
+)
 def delete_user_list_item(user_id, list_id, list_item_id):
     return f"api [admin]: delete list item {list_item_id} for list {list_id} of user {user_id}"
