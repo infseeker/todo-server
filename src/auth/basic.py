@@ -4,20 +4,13 @@
 import os
 
 from flask_cors import CORS
-from flask_login import (
-    LoginManager,
-    UserMixin,
-    current_user,
-    login_required,
-    login_user,
-    logout_user,
-)
+from flask_login import LoginManager
 from flask_wtf.csrf import CSRFProtect, generate_csrf
-from app import app, db
+
+from app import app
 from ..models.User import *
 
 app.config.update(
-    DEBUG=True,
     SECRET_KEY=os.environ["SECRET_KEY"],
     SESSION_COOKIE_HTTPONLY=True,
     REMEMBER_COOKIE_HTTPONLY=True,
@@ -28,7 +21,10 @@ login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.session_protection = "strong"
 
-# csrf = CSRFProtect(app)
+# CSRF
+csrf = CSRFProtect(app)
+
+# CORS
 cors = CORS(
     app,
     resources={r"*": {"origins": "http://localhost:3000"}},
@@ -36,5 +32,7 @@ cors = CORS(
     supports_credentials=True,
 )
 
-def get_user_by_name(username: str):
-    return User.query.filter_by(name = username).first()
+
+@login_manager.user_loader
+def get_user(id):
+    return User.query.get(id)
