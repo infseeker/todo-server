@@ -2,9 +2,11 @@ from app import app, db
 from ..models.User import *
 from ..models.List import *
 from ..models.ListItem import *
+from ..auth.basic import *
 
 
 @app.route("/todo/api/admin/users", methods=["GET"])
+@admin.require(403)
 def get_users():
     return "api [admin]: get users"
 

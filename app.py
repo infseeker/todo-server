@@ -5,6 +5,7 @@ from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
 
+
 # configuration
 DEBUG = True
 
@@ -28,6 +29,7 @@ app.config["JSON_SORT_KEYS"] = False
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
 migrate = Migrate(app, db)
+
 
 # init api
 from src.api import *

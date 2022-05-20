@@ -1,7 +1,6 @@
 from flask import request, jsonify
 from flask_login import current_user, login_user, login_required, logout_user
 from werkzeug.exceptions import *
-from webbrowser import get
 from app import app, db
 from ..models.User import *
 from ..auth.basic import *
@@ -40,9 +39,9 @@ def login():
 
     return jsonify({"login": False})
 
-
 @app.route("/todo/api/user/data", methods=["GET"])
 @login_required
+# @admin.require(403)
 def user_data():
     user = get_user(current_user.id)
     return user_schema.dump(user)
