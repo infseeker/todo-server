@@ -5,10 +5,10 @@ from ..models.User import User
 
 class List(db.Model):
 
-    __tablename__ = "lists"
+    __tablename__ = 'lists'
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id), nullable=False)
-    title = db.Column(db.Text, nullable=False, default="New List")
+    title = db.Column(db.Text, nullable=False, default='New List')
     is_liked = db.Column(db.Boolean, nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     updated = db.Column(
@@ -31,4 +31,4 @@ class ListSchema(SQLAlchemyAutoSchema):
         ordered = True
 
 
-list_schema = ListSchema(exclude=["created", "updated", "is_deleted"])
+list_schema = ListSchema(exclude=['created', 'updated', 'is_deleted'])

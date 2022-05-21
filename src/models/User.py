@@ -5,9 +5,9 @@ from werkzeug.security import generate_password_hash, check_password_hash
 
 
 class User(db.Model, UserMixin):
-    __tablename__ = "users"
+    __tablename__ = 'users'
     __table_args__ = (
-        db.UniqueConstraint("name", "email", "social_id", name="users_unique_fields"),
+        db.UniqueConstraint('name', 'email', 'social_id', name='users_unique_fields'),
     )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -55,5 +55,5 @@ class UserSchema(SQLAlchemyAutoSchema):
 
 
 user_schema = UserSchema(
-    exclude=["password_hash", "created", "updated", "is_deleted"]
+    exclude=['password_hash', 'created', 'updated', 'is_deleted']
 )

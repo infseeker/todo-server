@@ -4,11 +4,11 @@ from ..models.List import List
 
 
 class ListItem(db.Model):
-    __tablename__ = "list_items"
+    __tablename__ = 'list_items'
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     list_id = db.Column(db.Integer, db.ForeignKey(List.id), nullable=False)
-    title = db.Column(db.Text, nullable=False, default="New List Item")
+    title = db.Column(db.Text, nullable=False, default='New List Item')
     is_done = db.Column(db.Boolean, nullable=False, default=False)
     is_liked = db.Column(db.Boolean, nullable=False, default=False)
     position = db.Column(db.Float, nullable=False, default=0)
@@ -43,4 +43,4 @@ class ListItemSchema(SQLAlchemyAutoSchema):
         ordered = True
 
 
-list_item_schema = ListItemSchema(exclude=["created", "updated", "is_deleted"])
+list_item_schema = ListItemSchema(exclude=['created', 'updated', 'is_deleted'])

@@ -15,16 +15,16 @@ app.config.from_object(__name__)
 
 # data handling
 app.config[
-    "SQLALCHEMY_DATABASE_URI"
-] = "postgresql://{db_user_name}:{db_user_password}@{db_host}/{db_name}".format(
-    db_user_name=os.environ["DB_USER_NAME"],
-    db_user_password=os.environ["DB_USER_PASSWORD"],
-    db_host=os.environ["DB_HOST"],
-    db_name=os.environ["DB_NAME"],
+    'SQLALCHEMY_DATABASE_URI'
+] = 'postgresql://{db_user_name}:{db_user_password}@{db_host}/{db_name}'.format(
+    db_user_name=os.environ['DB_USER_NAME'],
+    db_user_password=os.environ['DB_USER_PASSWORD'],
+    db_host=os.environ['DB_HOST'],
+    db_name=os.environ['DB_NAME'],
 )
 
-app.config["SQLALCHEMY_TRACK_MODIFICATIONS"] = False
-app.config["JSON_SORT_KEYS"] = False
+app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
+app.config['JSON_SORT_KEYS'] = False
 
 db = SQLAlchemy(app)
 ma = Marshmallow(app)
@@ -35,13 +35,13 @@ migrate = Migrate(app, db)
 from src.api import *
 
 
-@app.route("/", methods=["GET"])
+@app.route('/', methods=['GET'])
 def index():
     return "ToDo Project API"
 
 
 # run app
-if __name__ == "__main__":
+if __name__ == '__main__':
     app.run()
 
 

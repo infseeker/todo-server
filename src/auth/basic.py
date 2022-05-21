@@ -20,10 +20,10 @@ from app import app
 from ..models.User import *
 
 app.config.update(
-    SECRET_KEY=os.environ["SECRET_KEY"],
+    SECRET_KEY=os.environ['SECRET_KEY'],
     SESSION_COOKIE_HTTPONLY=True,
     REMEMBER_COOKIE_HTTPONLY=True,
-    SESSION_COOKIE_SAMESITE="Lax",
+    SESSION_COOKIE_SAMESITE='Lax',
 )
 
 # CSRF
@@ -32,15 +32,15 @@ csrf = CSRFProtect(app)
 # CORS
 cors = CORS(
     app,
-    resources={r"*": {"origins": "http://localhost:3000"}},
-    expose_headers=["Content-Type", "X-CSRFToken"],
+    resources={r'*': {'origins': 'http://localhost:3000'}},
+    expose_headers=['Content-Type', 'X-CSRFToken'],
     supports_credentials=True,
 )
 
 # authentication
 login_manager = LoginManager()
 login_manager.init_app(app)
-login_manager.session_protection = "strong"
+login_manager.session_protection = 'strong'
 
 
 @login_manager.user_loader
@@ -50,7 +50,7 @@ def get_user(id):
 
 # authorization
 principals = Principal(app)
-admin = Permission(RoleNeed("admin"))
+admin = Permission(RoleNeed('admin'))
 
 
 @principals.identity_loader
@@ -66,4 +66,4 @@ def on_identity_loaded(sender, identity):
         identity.provides.add(UserNeed(identity.id))
 
         if current_user.is_admin:
-            identity.provides.add(RoleNeed("admin"))
+            identity.provides.add(RoleNeed('admin'))
