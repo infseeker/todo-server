@@ -1,5 +1,5 @@
 from app import db
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
 
@@ -7,14 +7,14 @@ from werkzeug.security import generate_password_hash, check_password_hash
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
     __table_args__ = (
-        db.UniqueConstraint('name', 'email', 'social_id', name='users_unique_fields'),
+        db.UniqueConstraint('username', 'email', 'social_id', name='users_unique_fields'),
     )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
-    name = db.Column(db.String(32), nullable=False)
-    password_hash = db.Column(db.String(256), nullable=False)
-    email = db.Column(db.String(64), nullable=False)
-    image_path = db.Column(db.String(256))
+    username = db.Column(db.String(16), nullable=False)
+    password = db.Column(db.String(128), nullable=False)
+    email = db.Column(db.String(254), nullable=False)
+    image_path = db.Column(db.String(4096))
     social_id = db.Column(db.String(256))
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
@@ -28,32 +28,28 @@ class User(db.Model, UserMixin):
 
     def __init__(
         self,
-        name=None,
+        username=None,
         email=None,
         password=None,
         image_path=None,
         social_id=None,
     ):
-        self.name = name
+        self.username = username
         self.email = email
-        self.password_hash = generate_password_hash(password)
+        self.password = generate_password_hash(password)
         self.image_path = image_path
         self.social_id = social_id
 
     def verify_password(self, password):
-        return check_password_hash(self.password_hash, password)
-
-    @staticmethod
-    def get_user_by_username(login: str):
-        return User.query.filter((User.name == login) | (User.email == login)).first()
+        return check_password_hash(self.password, password)
 
 
 class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = User
         ordered = True
+        include_relationships = True
+        load_instance = True
+    password = auto_field(load_only=True)
 
-
-user_schema = UserSchema(
-    exclude=['password_hash', 'created', 'updated', 'is_deleted']
-)
+user_schema = UserSchema(exclude=['social_id', 'is_admin', 'created', 'updated', 'is_deleted'])

@@ -1,3 +1,5 @@
+import json
+import re
 from flask import request, jsonify
 from flask_login import current_user, login_user, login_required, logout_user
 from werkzeug.exceptions import *
@@ -8,7 +10,108 @@ from ..auth.basic import *
 
 # Auth: Flask-login (Basic)
 # OAuth: Google, Yandex, VK, Apple
-@app.route('/todo/api/user/getcsrf', methods=['GET'])
+
+
+@app.route('/todo/api/user/check-username', methods=['POST'])
+def check_username():
+    data = request.json
+
+    if not data.get('username'):
+        message = "JSON: Failed: username field not found or empty"
+        return jsonify({'success': False, 'message': message}), 400
+    else:
+        username = data.get('username').strip()
+
+        # username pattern (min: 3, max: 15, chars: a-z, A-Z)
+        pattern = re.compile('^[a-zA-Z]{3,15}$')
+
+        if not pattern.match(username):
+            message = (
+                f"Failed: username {username} contents wrong characters (a-z, A-Z) / too short (3 min) / too long (15 max)",
+            )
+            return jsonify({'success': False, 'message': message}), 400
+        else:
+            user = User.query.filter(
+                db.func.lower(User.username) == db.func.lower(username)
+            ).first()
+
+            if user:
+                message = f"Failed: username {username} is already in use"
+                return jsonify({'success': False, 'message': message}), 400
+            else:
+                message = f"Success: username {username} is free"
+                return jsonify({'success': True, 'message': message}), 200
+
+
+@app.route('/todo/api/user/check-email', methods=['POST'])
+def check_email():
+    data = request.json
+    if not data.get('email'):
+        message = "JSON: Failed: email field not found or empty"
+        return jsonify({'success': False, 'message': message}), 400
+    else:
+        email = data.get('email').strip().lower()
+
+        # email pattern (user@mail.com)
+        pattern = re.compile('[^@]+@[^@]+\.[^@]+')
+
+        if not pattern.match(email):
+            message = f"Failed: email {email} has an invalid format"
+            return jsonify({'success': False, 'message': message}), 400
+        else:
+            user = User.query.filter(db.func.lower(User.email) == db.func.lower(email)).first()
+
+            if user:
+                message = f"Failed: email {email} is already in use"
+                return jsonify({'success': False, 'message': message}), 400
+            else:
+                message = f"Success: email {email} is free"
+                return jsonify({'success': True, 'message': message}), 200
+
+
+@app.route('/todo/api/user/check-password', methods=['POST'])
+def check_password():
+    data = request.json
+    if not data.get('password'):
+        message = "JSON: Failed: password field not found or empty"
+        return jsonify({'success': False, 'message': message}), 400
+    else:
+        password = data.get('password').strip().lower()
+
+        # email pattern (user@mail.com)
+        pattern = re.compile('^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,15}$')
+
+        if not pattern.match(password):
+            message = f"Failed: password has an invalid format"
+            return jsonify({'success': False, 'message': message}), 400
+        else:
+            message = f"Success: password format is valid"
+            return jsonify({'success': True, 'message': message}), 200
+
+
+@app.route('/todo/api/user/register', methods=['POST'])
+def register():
+    data = request.json
+
+    if (
+        check_username()[0].json['success']
+        and check_email()[0].json['success']
+        and check_password()[0].json['success']
+    ):
+        data = request.json
+        new_user = user_schema.load(request.json, session=db.session)
+        db.session.add(new_user)
+        db.session.commit()
+
+        email = data.get('email')
+        message = f"Success: email has been sent on {email}"
+        return jsonify({'success': True, 'message': message}), 200
+    else:
+        message = "Failed: check your username, email and password fields"
+        return jsonify({'success': False, 'message': message}), 400
+
+
+@app.route('/todo/api/user/csrf', methods=['GET'])
 def get_csrf():
     token = generate_csrf()
     response = jsonify({'detail': 'CSRF cookie set', 'token': token})
@@ -21,7 +124,7 @@ def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
-    user = User.query.filter((User.name == username) | (User.email == username)).first()
+    user = User.query.filter((User.username == username) | (User.email == username)).first()
 
     if user and user.verify_password(password):
         login_user(user)
@@ -30,17 +133,7 @@ def login():
     return jsonify({'login': False})
 
 
-@app.route('/todo/api/user/data', methods=['GET'])
-@login_required
-def user_data():
-    user = get_user(current_user.id)
-    return {
-        'user': user_schema.dump(user),
-        'is_authenticated': current_user.is_authenticated,
-    }
-
-
-@app.route('/todo/api/user/getsession', methods=['GET'])
+@app.route('/todo/api/user/session', methods=['GET'])
 def check_session():
     if current_user.is_authenticated:
         return jsonify({'login': True})
@@ -53,3 +146,14 @@ def check_session():
 def logout():
     logout_user()
     return jsonify({'logout': True})
+
+
+@app.route('/todo/api/user/data', methods=['GET'])
+@login_required
+def user_data():
+    user = get_user(current_user.id)
+    if not user.is_authenticated:
+        message = "You are not authenticated"
+        return jsonify({'success': False, 'message': message}), 401
+    else:
+        return jsonify({'success': True, 'data': user_schema.dump(current_user)}), 200
