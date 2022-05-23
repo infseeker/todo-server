@@ -26,9 +26,7 @@ def check_username():
         pattern = re.compile('^[a-zA-Z]{3,15}$')
 
         if not pattern.match(username):
-            message = (
-                f"Failed: username {username} contents wrong characters (a-z, A-Z) / too short (3 min) / too long (15 max)",
-            )
+            message = f"Failed: username {username} contents wrong characters (a-z, A-Z) / too short (3 min) / too long (15 max)",
             return jsonify({'success': False, 'message': message}), 400
         else:
             user = User.query.filter(
@@ -76,10 +74,10 @@ def check_password():
         message = "JSON: Failed: password field not found or empty"
         return jsonify({'success': False, 'message': message}), 400
     else:
-        password = data.get('password').strip().lower()
+        password = data.get('password')
 
-        # email pattern (user@mail.com)
-        pattern = re.compile('^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d]{8,15}$')
+        # password pattern ()
+        pattern = re.compile('^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,15}')
 
         if not pattern.match(password):
             message = f"Failed: password has an invalid format"
