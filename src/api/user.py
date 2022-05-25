@@ -51,7 +51,7 @@ def check_email():
         email = data.get('email').strip().lower()
 
         # email pattern (user@mail.com)
-        pattern = re.compile('[^@]+@[^@]+\.[^@]+')
+        pattern = re.compile('(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)')
 
         if not pattern.match(email):
             message = f"Failed: email {email} has an invalid format"
