@@ -14,7 +14,7 @@ from ..auth.basic import *
 # OAuth: Google, Yandex, VK, Apple
 
 
-@app.route('/todo/api/user/check-username', methods=['POST'])
+@app.route('/todo/api/user/validate-username', methods=['POST'])
 def check_username():
     data = request.json
 
@@ -49,7 +49,7 @@ def check_username():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/check-email', methods=['POST'])
+@app.route('/todo/api/user/validate-email', methods=['POST'])
 def check_email():
     data = request.json
 
@@ -76,7 +76,7 @@ def check_email():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/check-password', methods=['POST'])
+@app.route('/todo/api/user/validate-password', methods=['POST'])
 def check_password():
     data = request.json
     if not data.get('password'):
@@ -141,9 +141,13 @@ def register():
 @app.route('/todo/api/user/csrf', methods=['GET'])
 def get_csrf():
     token = generate_csrf()
-    response = jsonify({'detail': 'CSRF cookie set', 'token': token})
+    response = jsonify({
+            'success': True,
+            'message': f"Success: CSRF cookie set",
+            'token': token
+        })
     response.headers.set('X-CSRFToken', token)
-    return response
+    return response, 200
 
 
 @app.route('/todo/api/user/login', methods=['POST'])
@@ -188,23 +192,23 @@ def check_session():
     return jsonify(response), 200
 
 
+@app.route('/todo/api/user/user-data', methods=['GET'])
+@login_required
+def get_user_data():
+    response = {
+        'success': True,
+        'message': f"Success: you are logged in",
+        'user-data': user_schema.dump(current_user)
+    }
+    return jsonify(response), 200
+
+
 @app.route('/todo/api/user/logout', methods=['GET'])
 @login_required
 def logout():
     logout_user()
     response = {
         'success': True,
-        'message': f"Failed: you are logged out",
+        'message': f"Success: you are logged out",
     }
     return jsonify(response)
-
-
-@app.route('/todo/api/user/data', methods=['GET'])
-@login_required
-def user_data():
-    user = get_user(current_user.id)
-    if not user.is_authenticated:
-        message = "You are not authenticated"
-        return jsonify({'success': False, 'message': message}), 401
-    else:
-        return jsonify({'success': True, 'data': user_schema.dump(current_user)}), 200

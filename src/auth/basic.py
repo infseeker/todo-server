@@ -27,7 +27,7 @@ app.config.update(
 )
 
 # CSRF
-# csrf = CSRFProtect(app)
+csrf = CSRFProtect(app)
 
 # CORS
 cors = CORS(
