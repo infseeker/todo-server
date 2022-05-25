@@ -1,9 +1,9 @@
 import json
 import re
 from flask import request, jsonify
+from marshmallow import ValidationError
 from sqlalchemy import exc
 from flask_login import current_user, login_user, login_required, logout_user
-from psycopg2 import IntegrityError
 from werkzeug.exceptions import *
 from app import app, db
 from ..models.User import *
@@ -98,27 +98,36 @@ def check_password():
 
 @app.route('/todo/api/user/register', methods=['POST'])
 def register():
-    data = request.json
-    new_user = user_schema.load(data, session=db.session)
-
-    
-
     if (
         check_username()[0].json['success']
         and check_email()[0].json['success']
         and check_password()[0].json['success']
     ):
+        data = request.json
+
+        try:
+            new_user = user_schema.load(data, session=db.session)
+        except ValidationError:
+            response = {
+                'success': False,
+                'message': f"Failed: new user creation validation error, check your data",
+            }
+            return jsonify(response), 400
+
         try:
             db.session.add(new_user)
             db.session.commit()
 
-            email = data.get('email')
+            email = data.get('email').lower()
             response = {'success': True, 'message': f"Success: email has been sent on {email}"}
             return jsonify(response), 200
         except exc.IntegrityError:
             db.session.rollback()
 
-            response = {'success': False, 'message': "Failed: user with such username or email is already exists"}
+            response = {
+                'success': False,
+                'message': "Failed: user with such username or email is already exists",
+            }
             return jsonify(response), 400
     else:
         if not check_username()[0].json['success']:
@@ -127,6 +136,7 @@ def register():
             return check_email()
         elif not check_password()[0].json['success']:
             return check_password()
+
 
 @app.route('/todo/api/user/csrf', methods=['GET'])
 def get_csrf():
@@ -141,7 +151,11 @@ def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
-    user = User.query.filter((User.username == username) | (User.email == username)).first()
+    db.func.lower(User.username) == db.func.lower(username)
+    user = User.query.filter(
+        (db.func.lower(User.username) == db.func.lower(username))
+        | (db.func.lower(User.email) == db.func.lower(username))
+    ).first()
 
     if user and user.verify_password(password):
         login_user(user)
