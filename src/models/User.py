@@ -24,7 +24,7 @@ class User(db.Model, UserMixin):
         server_default=db.func.now(),
         server_onupdate=db.func.now(),
     )
-    is_active = db.Column(db.Boolean, nullable=False, default=False)
+    is_activated = db.Column(db.Boolean, nullable=False, default=False)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(
@@ -53,4 +53,4 @@ class UserSchema(SQLAlchemyAutoSchema):
         load_instance = True
     password = auto_field(load_only=True)
 
-user_schema = UserSchema(exclude=['social_id', 'is_admin', 'created', 'updated', 'is_active', 'is_deleted'])
+user_schema = UserSchema(exclude=['social_id', 'is_admin', 'created', 'updated', 'is_activated', 'is_deleted'])
