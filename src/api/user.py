@@ -159,24 +159,44 @@ def login():
 
     if user and user.verify_password(password):
         login_user(user)
-        return jsonify({'login': True})
+        response = {
+            'success': True,
+            'message': f"Success: you are logged in",
+        }
+        return jsonify(response), 200
 
-    return jsonify({'login': False})
+    response = {
+        'success': False,
+        'message': f"Failed: invalid username or password",
+    }
+    return jsonify(response), 400
 
 
 @app.route('/todo/api/user/session', methods=['GET'])
 def check_session():
-    if current_user.is_authenticated:
-        return jsonify({'login': True})
+    if not current_user.is_authenticated:
+        response = {
+            'success': False,
+            'message': f"Failed: you are not authenticated",
+        }
+        return jsonify(response), 401
 
-    return jsonify({'login': False})
+    response = {
+        'success': True,
+        'message': f"Success: you are logged in",
+    }
+    return jsonify(response), 200
 
 
 @app.route('/todo/api/user/logout', methods=['GET'])
 @login_required
 def logout():
     logout_user()
-    return jsonify({'logout': True})
+    response = {
+        'success': True,
+        'message': f"Failed: you are logged out",
+    }
+    return jsonify(response)
 
 
 @app.route('/todo/api/user/data', methods=['GET'])
