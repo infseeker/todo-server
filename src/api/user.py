@@ -5,13 +5,72 @@ from marshmallow import ValidationError
 from sqlalchemy import exc
 from flask_login import current_user, login_user, login_required, logout_user
 from werkzeug.exceptions import *
-from app import app, db
+from flask_mail import Message
+from app import app, db, mail
 from ..models.User import *
 from ..auth.basic import *
 
 
-# Auth: Flask-login (Basic)
-# OAuth: Google, Yandex, VK, Apple
+@app.route('/todo/api/user/csrf', methods=['GET'])
+def get_csrf():
+    token = generate_csrf()
+    response = jsonify({'success': True, 'message': f"Success: CSRF cookie set", 'token': token})
+    response.headers.set('X-CSRFToken', token)
+    return response, 200
+
+
+@app.route('/todo/api/user/activate', methods=['POST'])
+def activate():
+    data = request.json
+    email = data.get('email')
+    activation_code = data.get('activation-code')
+    pattern = re.compile(r"[0-9]{4}$")
+    mat = pattern.match(str(activation_code))
+        
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        if not user.is_activated:
+            if activation_code and pattern.match(str(activation_code)):
+                if user.activation_code == activation_code:
+                    user.is_activated = True
+
+                    try:
+                        db.session.add(user)
+                        db.session.commit()
+                    except:
+                        db.session.rollback()
+                        return 'Something went wrong'
+
+                    response = {
+                        'success': True,
+                        'message': f"Success: email {email} has been activated",
+                    }
+                    return jsonify(response), 200
+                else:
+                    response = {
+                        'success': False,
+                        'message': f"Failed: entered code is incorrect. Please try again.",
+                    }
+                    return jsonify(response), 400
+            else:
+                response = {
+                    'success': False,
+                    'message': f"Failed: invalid activation code format",
+                }
+                return jsonify(response), 400
+        else:
+            response = {
+            'success': False,
+            'message': f"Failed: email {email} already activated",
+        }
+        return jsonify(response), 400
+    else:
+        response = {
+            'success': False,
+            'message': f"Failed: user with email {email} was not found",
+        }
+        return jsonify(response), 400
 
 
 @app.route('/todo/api/user/validate-username', methods=['POST'])
@@ -106,19 +165,29 @@ def register():
         data = request.json
 
         try:
-            new_user = user_schema.load(data, session=db.session)
+            user = user_schema.load(data, session=db.session)
         except ValidationError:
             response = {
                 'success': False,
-                'message': f"Failed: new user creation validation error, check your data",
+                'message': f"Failed: user creation validation error, check your data",
             }
             return jsonify(response), 400
 
         try:
-            db.session.add(new_user)
+            db.session.add(user)
             db.session.commit()
 
             email = data.get('email').lower()
+
+            with app.app_context():
+                msg = Message(
+                    subject="User has been registered",
+                    sender=app.config.get("MAIL_USERNAME"),
+                    recipients=[f"<{email}>"],
+                    body=f"Username: {user.username}\nEmail: {user.email}\nActivation code: {user.activation_code}",
+                )
+                mail.send(msg)
+
             response = {'success': True, 'message': f"Success: email has been sent on {email}"}
             return jsonify(response), 200
         except exc.IntegrityError:
@@ -136,18 +205,6 @@ def register():
             return check_email()
         elif not check_password()[0].json['success']:
             return check_password()
-
-
-@app.route('/todo/api/user/csrf', methods=['GET'])
-def get_csrf():
-    token = generate_csrf()
-    response = jsonify({
-            'success': True,
-            'message': f"Success: CSRF cookie set",
-            'token': token
-        })
-    response.headers.set('X-CSRFToken', token)
-    return response, 200
 
 
 @app.route('/todo/api/user/login', methods=['POST'])
@@ -198,7 +255,7 @@ def get_user_data():
     response = {
         'success': True,
         'message': f"Success: you are logged in",
-        'user-data': user_schema.dump(current_user)
+        'user-data': user_schema.dump(current_user),
     }
     return jsonify(response), 200
 

@@ -4,6 +4,7 @@ from flask import Flask
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
+from flask_mail import Mail
 
 
 # configuration
@@ -12,6 +13,7 @@ DEBUG = True
 # instantiate the app
 app = Flask(__name__)
 app.config.from_object(__name__)
+
 
 # data handling
 app.config[
@@ -31,6 +33,20 @@ ma = Marshmallow(app)
 migrate = Migrate(app, db)
 
 
+# mail config
+mail_settings = {
+    'MAIL_SERVER': 'smtp.mail.ru',
+    'MAIL_PORT': 465,
+    'MAIL_USE_TLS': False,
+    'MAIL_USE_SSL': True,
+    'MAIL_USERNAME': os.environ['EMAIL_USER'],
+    'MAIL_PASSWORD': os.environ['EMAIL_PASSWORD']
+}
+
+app.config.update(mail_settings)
+mail = Mail(app)
+
+
 # init api
 from src.api import *
 
@@ -48,3 +64,6 @@ if __name__ == '__main__':
 # source env/bin/activate
 # export FLASK_ENV=development
 # flask run --host=0.0.0.0
+
+# Auth: Flask-login (Basic)
+# OAuth: Google, Yandex, VK, Apple
