@@ -36,7 +36,7 @@ class User(db.Model, UserMixin):
         social_id=None,
     ):
         self.username = username
-        self.email = email
+        self.email = db.func.lower(email)
         self.password = generate_password_hash(password)
         self.image_path = image_path
         self.social_id = social_id
