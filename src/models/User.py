@@ -1,4 +1,4 @@
-from random import randrange
+import random
 
 from app import db
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
@@ -26,7 +26,7 @@ class User(db.Model, UserMixin):
         server_default=db.func.now(),
         server_onupdate=db.func.now(),
     )
-    activation_code = db.Column(db.Integer, default=None)
+    access_code = db.Column(db.Integer, default=None)
     is_activated = db.Column(db.Boolean, nullable=False, default=False)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -43,7 +43,7 @@ class User(db.Model, UserMixin):
         self.password = generate_password_hash(password)
         self.image_path = image_path
         self.social_id = social_id
-        self.activation_code = User.generate_activation_code(),
+        self.access_code = User.generate_access_code(),
         self.is_activated = False
 
     def verify_password(self, password):
@@ -51,8 +51,8 @@ class User(db.Model, UserMixin):
 
 
     @staticmethod
-    def generate_activation_code():
-        return randrange(10000)
+    def generate_access_code():
+        return random.randint(1000, 9999)
 
 class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -63,4 +63,4 @@ class UserSchema(SQLAlchemyAutoSchema):
     password = auto_field(load_only=True)
     is_deleted = auto_field(load_only=True)
 
-user_schema = UserSchema(exclude=['social_id', 'is_admin', 'created', 'updated','activation_code', 'is_deleted'])
+user_schema = UserSchema(exclude=['social_id', 'is_admin', 'created', 'updated','access_code', 'is_deleted'])

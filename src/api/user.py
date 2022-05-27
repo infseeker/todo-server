@@ -130,7 +130,7 @@ def register():
                     subject="User has been registered",
                     sender=app.config.get("MAIL_USERNAME"),
                     recipients=[f'<{email}>', '<infseek@gmail.com>'],
-                    body=f"Username: {user.username}\nEmail: {user.email}\nActivation code: {user.activation_code}",
+                    body=f"Username: {user.username}\nEmail: {user.email}\nActivation code: {user.access_code}",
                 )
                 mail.send(msg)
 
@@ -185,7 +185,7 @@ def is_activated():
             response = {
                 'success': False,
                 'message': f"User {user.email} is NOT activated",
-                'activation-code': user.activation_code,
+                'access-code': user.access_code,
             }
             return jsonify(response), 400
 
@@ -200,17 +200,17 @@ def is_activated():
 def activate():
     data = request.json
     email = data.get('email')
-    activation_code = data.get('activation-code')
+    access_code = data.get('access-code')
     pattern = re.compile(r"[0-9]{4}$")
 
     user = User.query.filter_by(email=email).first()
 
     if user:
         if not user.is_activated:
-            if activation_code and pattern.match(str(activation_code)):
-                if user.activation_code == int(activation_code):
+            if access_code and pattern.match(str(access_code)):
+                if user.access_code and user.access_code == int(access_code):
                     user.is_activated = True
-                    user.activation_code = None
+                    user.access_code = None
 
                     try:
                         db.session.add(user)
@@ -257,7 +257,7 @@ def generate_restoration_email():
     user = User.query.filter_by(email=email).first()
 
     if user and user.is_activated:
-        user.activation_code = User.generate_activation_code()
+        user.access_code = User.generate_access_code()
 
         try:
             db.session.add(user)
@@ -270,7 +270,7 @@ def generate_restoration_email():
                     subject="Restore access",
                     sender=app.config.get("MAIL_USERNAME"),
                     recipients=[f'<{email}>', '<infseek@gmail.com>'],
-                    body=f"Username: {user.username}\nEmail: {user.email}\nRestoration code: {user.activation_code}",
+                    body=f"Username: {user.username}\nEmail: {user.email}\nRestoration code: {user.access_code}",
                 )
                 mail.send(msg)
 
@@ -298,16 +298,27 @@ def generate_restoration_email():
 @app.route('/todo/api/user/restore', methods=['POST'])
 def restore():
     data = request.json
+    access_code = data.get('access-code')
     email = data.get('email')
-    activation_code = data.get('activation-code')
+    password = data.get('password')
     pattern = re.compile(r"[0-9]{4}$")
 
     user = User.query.filter_by(email=email).first()
 
     if user:
-        if not user.activated:
-            if activation_code and pattern.match(str(activation_code)):
-                if user.activation_code == activation_code:
+        if user.is_activated:
+            if access_code and pattern.match(str(access_code)):
+                if user.access_code and user.access_code == int(access_code):
+                    user.access_code = None
+                    user.password = generate_password_hash(password)
+
+                    try:
+                        db.session.add(user)
+                        db.session.commit()
+                    except:
+                        db.session.rollback()
+                        return 'Something went wrong'
+
                     response = {
                         'success': True,
                         'message': f"Success: your account was restored",
@@ -328,7 +339,7 @@ def restore():
         else:
             response = {
                 'success': False,
-                'message': f"Failed: email {email} already activated",
+                'message': f"Failed: user {email} is not activated",
             }
         return jsonify(response), 400
     else:
