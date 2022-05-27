@@ -311,6 +311,7 @@ def restore():
                 if user.access_code and user.access_code == int(access_code):
                     user.access_code = None
                     user.password = generate_password_hash(password)
+                    user.is_deleted = False
 
                     try:
                         db.session.add(user)
