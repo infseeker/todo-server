@@ -26,7 +26,7 @@ class User(db.Model, UserMixin):
         server_default=db.func.now(),
         server_onupdate=db.func.now(),
     )
-    activation_code = db.Column(db.Integer, nullable=False, default=0)
+    activation_code = db.Column(db.Integer, default=None)
     is_activated = db.Column(db.Boolean, nullable=False, default=False)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
@@ -37,18 +37,22 @@ class User(db.Model, UserMixin):
         password=None,
         image_path=None,
         social_id=None,
-        activation_code=None
     ):
         self.username = username
         self.email = db.func.lower(email)
         self.password = generate_password_hash(password)
         self.image_path = image_path
         self.social_id = social_id
-        self.activation_code = randrange(10000)
+        self.activation_code = User.generate_activation_code(),
+        self.is_activated = False
 
     def verify_password(self, password):
         return check_password_hash(self.password, password)
 
+
+    @staticmethod
+    def generate_activation_code():
+        return randrange(10000)
 
 class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -57,5 +61,6 @@ class UserSchema(SQLAlchemyAutoSchema):
         include_relationships = True
         load_instance = True
     password = auto_field(load_only=True)
+    is_deleted = auto_field(load_only=True)
 
-user_schema = UserSchema(exclude=['social_id', 'is_admin', 'created', 'updated','activation_code', 'is_activated', 'is_deleted'])
+user_schema = UserSchema(exclude=['social_id', 'is_admin', 'created', 'updated','activation_code', 'is_deleted'])

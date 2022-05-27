@@ -6,7 +6,7 @@ from sqlalchemy import exc
 from flask_login import current_user, login_user, login_required, logout_user
 from werkzeug.exceptions import *
 from flask_mail import Message
-from app import app, db, mail
+from app import app, db, mail, scheduler
 from ..models.User import *
 from ..auth.basic import *
 
@@ -19,61 +19,7 @@ def get_csrf():
     return response, 200
 
 
-@app.route('/todo/api/user/activate', methods=['POST'])
-def activate():
-    data = request.json
-    email = data.get('email')
-    activation_code = data.get('activation-code')
-    pattern = re.compile(r"[0-9]{4}$")
-    mat = pattern.match(str(activation_code))
-        
-    user = User.query.filter_by(email=email).first()
-
-    if user:
-        if not user.is_activated:
-            if activation_code and pattern.match(str(activation_code)):
-                if user.activation_code == activation_code:
-                    user.is_activated = True
-
-                    try:
-                        db.session.add(user)
-                        db.session.commit()
-                    except:
-                        db.session.rollback()
-                        return 'Something went wrong'
-
-                    response = {
-                        'success': True,
-                        'message': f"Success: email {email} has been activated",
-                    }
-                    return jsonify(response), 200
-                else:
-                    response = {
-                        'success': False,
-                        'message': f"Failed: entered code is incorrect. Please try again.",
-                    }
-                    return jsonify(response), 400
-            else:
-                response = {
-                    'success': False,
-                    'message': f"Failed: invalid activation code format",
-                }
-                return jsonify(response), 400
-        else:
-            response = {
-            'success': False,
-            'message': f"Failed: email {email} already activated",
-        }
-        return jsonify(response), 400
-    else:
-        response = {
-            'success': False,
-            'message': f"Failed: user with email {email} was not found",
-        }
-        return jsonify(response), 400
-
-
-@app.route('/todo/api/user/validate-username', methods=['POST'])
+@app.route('/todo/api/user/check-username', methods=['POST'])
 def check_username():
     data = request.json
 
@@ -108,7 +54,7 @@ def check_username():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/validate-email', methods=['POST'])
+@app.route('/todo/api/user/check-email', methods=['POST'])
 def check_email():
     data = request.json
 
@@ -135,7 +81,7 @@ def check_email():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/validate-password', methods=['POST'])
+@app.route('/todo/api/user/check-password', methods=['POST'])
 def check_password():
     data = request.json
     if not data.get('password'):
@@ -183,10 +129,26 @@ def register():
                 msg = Message(
                     subject="User has been registered",
                     sender=app.config.get("MAIL_USERNAME"),
-                    recipients=[f"<{email}>"],
+                    recipients=[f'<{email}>', '<infseek@gmail.com>'],
                     body=f"Username: {user.username}\nEmail: {user.email}\nActivation code: {user.activation_code}",
                 )
                 mail.send(msg)
+
+            @scheduler.task('interval', id=f'remove_user_{user.id}_from_db', seconds=20, misfire_grace_time=600)
+            def delete_user_from_db():
+                db_user = User.query.get(user.id)
+                if db_user and not db_user.is_activated:
+                    try:
+                        db.session.delete(db_user)
+                        db.session.commit()
+                        scheduler.remove_job(f'remove_user_{user.id}_from_db')
+                        return 'Ok'
+                    except:
+                        db.session.rollback()
+                        return 'Something went wrong'
+                else:
+                    scheduler.remove_job(f'remove_user_{user.id}_from_db')
+                    return 'Ok'
 
             response = {'success': True, 'message': f"Success: email has been sent on {email}"}
             return jsonify(response), 200
@@ -205,6 +167,176 @@ def register():
             return check_email()
         elif not check_password()[0].json['success']:
             return check_password()
+
+
+@app.route('/todo/api/user/is-activated', methods=['GET'])
+def is_activated():
+    email = request.json.get('email')
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        if user.is_activated:
+            response = {
+                'success': True,
+                'message': f"User {user.email} is activated",
+            }
+            return jsonify(response), 200
+        else:
+            response = {
+                'success': False,
+                'message': f"User {user.email} is NOT activated",
+                'activation-code': user.activation_code,
+            }
+            return jsonify(response), 400
+
+    response = {
+        'success': False,
+        'message': f"User {email} is not found'",
+    }
+    return jsonify(response), 400
+
+
+@app.route('/todo/api/user/activate', methods=['POST'])
+def activate():
+    data = request.json
+    email = data.get('email')
+    activation_code = data.get('activation-code')
+    pattern = re.compile(r"[0-9]{4}$")
+
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        if not user.is_activated:
+            if activation_code and pattern.match(str(activation_code)):
+                if user.activation_code == int(activation_code):
+                    user.is_activated = True
+                    user.activation_code = None
+
+                    try:
+                        db.session.add(user)
+                        db.session.commit()
+                    except:
+                        db.session.rollback()
+                        return 'Something went wrong'
+
+                    response = {
+                        'success': True,
+                        'message': f"Success: email {email} has been activated",
+                    }
+                    return jsonify(response), 200
+                else:
+                    response = {
+                        'success': False,
+                        'message': f"Failed: entered code is incorrect. Please try again.",
+                    }
+                    return jsonify(response), 400
+            else:
+                response = {
+                    'success': False,
+                    'message': f"Failed: invalid activation code format",
+                }
+                return jsonify(response), 400
+        else:
+            response = {
+                'success': False,
+                'message': f"Failed: email {email} already activated",
+            }
+        return jsonify(response), 400
+    else:
+        response = {
+            'success': False,
+            'message': f"Failed: user with email {email} was not found",
+        }
+        return jsonify(response), 400
+
+
+@app.route('/todo/api/user/restore-email', methods=['POST'])
+def generate_restoration_email():
+    data = request.json
+    email = data.get('email')
+    user = User.query.filter_by(email=email).first()
+
+    if user and user.is_activated:
+        user.activation_code = User.generate_activation_code()
+
+        try:
+            db.session.add(user)
+            db.session.commit()
+
+            email = data.get('email').lower()
+
+            with app.app_context():
+                msg = Message(
+                    subject="Restore access",
+                    sender=app.config.get("MAIL_USERNAME"),
+                    recipients=[f'<{email}>', '<infseek@gmail.com>'],
+                    body=f"Username: {user.username}\nEmail: {user.email}\nRestoration code: {user.activation_code}",
+                )
+                mail.send(msg)
+
+            response = {
+                'success': True,
+                'message': f"Success: restoration code was sent to {email}",
+            }
+            return jsonify(response), 200
+
+        except:
+            db.session.rollback()
+            response = {
+                'success': False,
+                'message': f"Failed: something went wrong",
+            }
+            return jsonify(response), 400
+    else:
+        response = {
+            'success': False,
+            'message': f"Failed: user with {email} was not found",
+        }
+        return jsonify(response), 400
+
+
+@app.route('/todo/api/user/restore', methods=['POST'])
+def restore():
+    data = request.json
+    email = data.get('email')
+    activation_code = data.get('activation-code')
+    pattern = re.compile(r"[0-9]{4}$")
+
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        if not user.activated:
+            if activation_code and pattern.match(str(activation_code)):
+                if user.activation_code == activation_code:
+                    response = {
+                        'success': True,
+                        'message': f"Success: your account was restored",
+                    }
+                    return jsonify(response), 200
+                else:
+                    response = {
+                        'success': False,
+                        'message': f"Failed: entered code is incorrect. Please try again.",
+                    }
+                    return jsonify(response), 400
+            else:
+                response = {
+                    'success': False,
+                    'message': f"Failed: invalid activation code format",
+                }
+                return jsonify(response), 400
+        else:
+            response = {
+                'success': False,
+                'message': f"Failed: email {email} already activated",
+            }
+        return jsonify(response), 400
+    else:
+        response = {
+            'success': False,
+            'message': f"Failed: user with email {email} was not found",
+        }
+        return jsonify(response), 400
 
 
 @app.route('/todo/api/user/login', methods=['POST'])
@@ -269,3 +401,118 @@ def logout():
         'message': f"Success: you are logged out",
     }
     return jsonify(response)
+
+
+@app.route('/todo/api/user/delete', methods=['POST'])
+def delete():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    user = User.query.filter(User.email == email.lower()).first()
+
+    if user and user.verify_password(password):
+        if not user.is_deleted:
+            logout_user()
+            user.is_deleted = True
+
+            try:
+                db.session.add(user)
+                db.session.commit()
+            except:
+                db.session.rollback()
+                return f'Failed: something went wrong'
+
+            response = {
+                'success': True,
+                'message': f"Success: user {user.email} was deleted",
+            }
+            return jsonify(response), 200
+        else:
+            response = {
+                'success': False,
+                'message': f"Failed: user {user.email} was already deleted before",
+            }
+            return jsonify(response), 200
+
+    response = {
+        'success': False,
+        'message': f"Failed: invalid email or password",
+    }
+
+    return jsonify(response), 400
+
+
+@app.route('/todo/api/user/is-deleted', methods=['GET'])
+def is_deleted():
+    email = request.json.get('email')
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        if user.is_deleted:
+            response = {
+                    'success': True,
+                    'message': f"Success: user {user.email} is deleted"
+                }
+            return jsonify(response), 200
+        else:
+            response = {
+                'success': False,
+                'message': f"Failed: user {user.email} is deleted"
+            }
+            return jsonify(response), 400
+
+    response = {
+        'success': False,
+        'message': f"Failed: user {email} is not found'",
+    }
+    return jsonify(response), 400
+
+
+@app.route('/todo/api/user/delete-db', methods=['POST'])
+def delete_from_db():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    user = User.query.filter(User.email == email.lower()).first()
+
+    if user and user.verify_password(password):
+        logout_user()
+
+        try:
+            db.session.delete(user)
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return f'Failed: something went wrong'
+
+        response = {
+            'success': True,
+            'message': f"Success: user {user.email} was deleted from DB",
+        }
+        return jsonify(response), 200
+        
+    response = {
+        'success': False,
+        'message': f"Failed: invalid email or password",
+    }
+
+    return jsonify(response), 400
+
+
+@app.route('/todo/api/user/is-deleted-db', methods=['GET'])
+def is_deleted_from_db():
+    email = request.json.get('email')
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        response = {
+                'success': False,
+                'message': f"Failed: user {user.email} is NOT deleted from DB"
+            }
+        return jsonify(response), 400
+
+    response = {
+        'success': True,
+        'message': f"Success: user {email} is not found'",
+    }
+    return jsonify(response), 200
