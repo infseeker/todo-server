@@ -66,4 +66,4 @@ class UserSchema(SQLAlchemyAutoSchema):
     password = auto_field('password_hash', load_only=True)
     is_deleted = auto_field(load_only=True)
 
-user_schema = UserSchema(exclude=['social_id', 'is_admin', 'created', 'updated','access_code', 'is_deleted'])
+user_schema = UserSchema(exclude=['social_id', 'image_path', 'is_activated', 'is_admin', 'created', 'updated','access_code', 'is_deleted'])
