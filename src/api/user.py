@@ -372,12 +372,19 @@ def login():
 
     if user and user.verify_password(password):
         if user.is_activated:
-            login_user(user)
-            response = {
-                'success': True,
-                'message': f"Success: you are logged in",
-            }
-            return jsonify(response), 200
+            if not user.is_deleted:
+                login_user(user)
+                response = {
+                    'success': True,
+                    'message': f"Success: you are logged in",
+                }
+                return jsonify(response), 200
+            else:
+                response = {
+                    'success': False,
+                    'message': f"Failed: your account was deleted",
+                }
+                return jsonify(response), 401
         else:
             response = {
                 'success': False,
