@@ -469,7 +469,7 @@ def is_deleted():
         else:
             response = {
                 'success': False,
-                'message': f"Failed: user {user.email} is deleted"
+                'message': f"Failed: user {user.email} is NOT deleted"
             }
             return jsonify(response), 400
 
