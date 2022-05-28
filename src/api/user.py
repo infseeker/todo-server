@@ -123,34 +123,27 @@ def register():
             db.session.add(user)
             db.session.commit()
 
-            email = data.get('email').lower()
+            send_email_with_access_code(user)
 
-            with app.app_context():
-                msg = Message(
-                    subject="User has been registered",
-                    sender=app.config.get("MAIL_USERNAME"),
-                    recipients=[f'<{email}>', '<infseek@gmail.com>'],
-                    body=f"Username: {user.username}\nEmail: {user.email}\nActivation code: {user.access_code}",
-                )
-                mail.send(msg)
-
-            @scheduler.task('interval', id=f'remove_user_{user.id}_from_db', seconds=20, misfire_grace_time=600)
+            @scheduler.task(
+                'interval', id=f'delete_user_{user.id}_from_db', seconds=30, misfire_grace_time=600
+            )
             def delete_user_from_db():
                 db_user = User.query.get(user.id)
                 if db_user and not db_user.is_activated:
                     try:
                         db.session.delete(db_user)
                         db.session.commit()
-                        scheduler.remove_job(f'remove_user_{user.id}_from_db')
+                        scheduler.remove_job(f'delete_user_{user.id}_from_db')
                         return 'Ok'
                     except:
                         db.session.rollback()
                         return 'Something went wrong'
                 else:
-                    scheduler.remove_job(f'remove_user_{user.id}_from_db')
+                    scheduler.remove_job(f'delete_user_{user.id}_from_db')
                     return 'Ok'
 
-            response = {'success': True, 'message': f"Success: email has been sent on {email}"}
+            response = {'success': True, 'message': f"Success: email has been sent to {user.email}"}
             return jsonify(response), 200
         except exc.IntegrityError:
             db.session.rollback()
@@ -167,33 +160,6 @@ def register():
             return check_email()
         elif not check_password()[0].json['success']:
             return check_password()
-
-
-@app.route('/todo/api/user/is-activated', methods=['GET'])
-def is_activated():
-    email = request.json.get('email')
-    user = User.query.filter_by(email=email).first()
-
-    if user:
-        if user.is_activated:
-            response = {
-                'success': True,
-                'message': f"User {user.email} is activated",
-            }
-            return jsonify(response), 200
-        else:
-            response = {
-                'success': False,
-                'message': f"User {user.email} is NOT activated",
-                'access-code': user.access_code,
-            }
-            return jsonify(response), 400
-
-    response = {
-        'success': False,
-        'message': f"User {email} is not found'",
-    }
-    return jsonify(response), 400
 
 
 @app.route('/todo/api/user/activate', methods=['POST'])
@@ -250,6 +216,34 @@ def activate():
         return jsonify(response), 400
 
 
+@app.route('/todo/api/user/is-activated', methods=['GET'])
+def is_activated():
+    email = request.json.get('email')
+    user = User.query.filter_by(email=email).first()
+
+    if user:
+        if user.is_activated:
+            response = {
+                'success': True,
+                'message': f"User {user.email} is activated",
+                'access-code': user.access_code,
+            }
+            return jsonify(response), 200
+        else:
+            response = {
+                'success': False,
+                'message': f"User {user.email} is NOT activated",
+                'access-code': user.access_code,
+            }
+            return jsonify(response), 400
+
+    response = {
+        'success': False,
+        'message': f"User {email} is not found'",
+    }
+    return jsonify(response), 400
+
+
 @app.route('/todo/api/user/restore-email', methods=['POST'])
 def generate_restoration_email():
     data = request.json
@@ -263,20 +257,34 @@ def generate_restoration_email():
             db.session.add(user)
             db.session.commit()
 
-            email = data.get('email').lower()
+            send_email_with_access_code(user)
 
-            with app.app_context():
-                msg = Message(
-                    subject="Restore access",
-                    sender=app.config.get("MAIL_USERNAME"),
-                    recipients=[f'<{email}>', '<infseek@gmail.com>'],
-                    body=f"Username: {user.username}\nEmail: {user.email}\nRestoration code: {user.access_code}",
-                )
-                mail.send(msg)
+            @scheduler.task(
+                'interval',
+                id=f'delete_access_code_for_{user.id}_from_db',
+                seconds=30,
+                misfire_grace_time=600,
+            )
+            def delete_access_code_from_db():
+                db_user = User.query.get(user.id)
+                if db_user and db_user.is_activated:
+                    db_user.access_code = None
+
+                    try:
+                        db.session.add(db_user)
+                        db.session.commit()
+                        scheduler.remove_job(f'delete_access_code_for_{user.id}_from_db')
+                        return 'Ok'
+                    except:
+                        db.session.rollback()
+                        return 'Something went wrong'
+                else:
+                    scheduler.remove_job(f'delete_access_code_for_{user.id}_from_db')
+                    return 'Ok'
 
             response = {
                 'success': True,
-                'message': f"Success: restoration code was sent to {email}",
+                'message': f"Success: restoration code was sent to {user.email}",
             }
             return jsonify(response), 200
 
@@ -290,7 +298,7 @@ def generate_restoration_email():
     else:
         response = {
             'success': False,
-            'message': f"Failed: user with {email} was not found",
+            'message': f"Failed: user with {email.lower()} was not found",
         }
         return jsonify(response), 400
 
@@ -310,7 +318,7 @@ def restore():
             if access_code and pattern.match(str(access_code)):
                 if user.access_code and user.access_code == int(access_code):
                     user.access_code = None
-                    user.password = generate_password_hash(password)
+                    user.password_hash = generate_password_hash(password)
                     user.is_deleted = False
 
                     try:
@@ -468,16 +476,10 @@ def is_deleted():
 
     if user:
         if user.is_deleted:
-            response = {
-                    'success': True,
-                    'message': f"Success: user {user.email} is deleted"
-                }
+            response = {'success': True, 'message': f"Success: user {user.email} is deleted"}
             return jsonify(response), 200
         else:
-            response = {
-                'success': False,
-                'message': f"Failed: user {user.email} is NOT deleted"
-            }
+            response = {'success': False, 'message': f"Failed: user {user.email} is NOT deleted"}
             return jsonify(response), 400
 
     response = {
@@ -509,7 +511,7 @@ def delete_from_db():
             'message': f"Success: user {user.email} was deleted from DB",
         }
         return jsonify(response), 200
-        
+
     response = {
         'success': False,
         'message': f"Failed: invalid email or password",
@@ -525,9 +527,9 @@ def is_deleted_from_db():
 
     if user:
         response = {
-                'success': False,
-                'message': f"Failed: user {user.email} is NOT deleted from DB"
-            }
+            'success': False,
+            'message': f"Failed: user {user.email} is NOT deleted from DB",
+        }
         return jsonify(response), 400
 
     response = {
@@ -535,3 +537,23 @@ def is_deleted_from_db():
         'message': f"Success: user {email} is not found'",
     }
     return jsonify(response), 200
+
+
+def send_email_with_access_code(user):
+    with app.app_context():
+        if not user.is_activated:
+            msg = Message(
+                subject="ToDo: User has been registered",
+                sender=app.config.get("MAIL_USERNAME"),
+                recipients=[f'<{user.email}>', '<infseek@gmail.com>'],
+                body=f"Activation code is valid for 5 minutes.\n\nUsername: {user.username}\nEmail: {user.email}\nActivation code: {user.access_code}",
+            )
+        else:
+            msg = Message(
+                subject="ToDo: Restoration code",
+                sender=app.config.get("MAIL_USERNAME"),
+                recipients=[f'<{user.email}>', '<infseek@gmail.com>'],
+                body=f"Restoration code is valid for 60 minutes.\n\nUsername: {user.username}\nEmail: {user.email}\nActivation code: {user.access_code}",
+            )
+
+        mail.send(msg)
