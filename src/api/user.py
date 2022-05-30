@@ -1,4 +1,3 @@
-import json
 import re
 from flask import request, jsonify
 from marshmallow import ValidationError
@@ -166,7 +165,7 @@ def register():
 def activate():
     data = request.json
     email = data.get('email')
-    access_code = data.get('access-code')
+    access_code = data.get('access_code')
     pattern = re.compile(r"[0-9]{4}$")
 
     user = User.query.filter_by(email=email).first()
@@ -226,14 +225,14 @@ def is_activated():
             response = {
                 'success': True,
                 'message': f"User {user.email} is activated",
-                'access-code': user.access_code,
+                'access_code': user.access_code,
             }
             return jsonify(response), 200
         else:
             response = {
                 'success': False,
                 'message': f"User {user.email} is NOT activated",
-                'access-code': user.access_code,
+                'access_code': user.access_code,
             }
             return jsonify(response), 400
 
@@ -306,7 +305,7 @@ def generate_restoration_email():
 @app.route('/todo/api/user/restore', methods=['POST'])
 def restore():
     data = request.json
-    access_code = data.get('access-code')
+    access_code = data.get('access_code')
     email = data.get('email')
     password = data.get('password')
     pattern = re.compile(r"[0-9]{4}$")
@@ -315,6 +314,9 @@ def restore():
 
     if user:
         if user.is_activated:
+            if not check_password()[0].json['success']:
+                return check_password()
+                
             if access_code and pattern.match(str(access_code)):
                 if user.access_code and user.access_code == int(access_code):
                     user.access_code = None

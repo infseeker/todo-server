@@ -10,7 +10,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
     __table_args__ = (
-        db.UniqueConstraint('username', 'email', 'social_id', name='users_unique_fields'), 
+        db.UniqueConstraint('username', 'email', 'social_id', name='users_unique_fields'),
     )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -44,16 +44,16 @@ class User(db.Model, UserMixin):
         self.password_hash = generate_password_hash(password_hash)
         self.image_path = image_path
         self.social_id = social_id
-        self.access_code = User.generate_access_code(),
+        self.access_code = (User.generate_access_code(),)
         self.is_activated = False
 
     def verify_password(self, password):
         return check_password_hash(self.password_hash, password)
 
-
     @staticmethod
     def generate_access_code():
         return random.randint(1000, 9999)
+
 
 class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -61,9 +61,21 @@ class UserSchema(SQLAlchemyAutoSchema):
         ordered = True
         include_relationships = True
         load_instance = True
-        exclude=('password_hash', )
+        exclude = ('password_hash',)
 
     password = auto_field('password_hash', load_only=True)
     is_deleted = auto_field(load_only=True)
 
-user_schema = UserSchema(exclude=['social_id', 'image_path', 'is_activated', 'is_admin', 'created', 'updated','access_code', 'is_deleted'])
+
+user_schema = UserSchema(
+    exclude=[
+        'social_id',
+        'image_path',
+        'is_activated',
+        'is_admin',
+        'created',
+        'updated',
+        'access_code',
+        'is_deleted',
+    ]
+)
