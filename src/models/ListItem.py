@@ -19,7 +19,6 @@ class ListItem(db.Model):
         server_default=db.func.now(),
         server_onupdate=db.func.now(),
     )
-    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(
         self,
@@ -27,14 +26,36 @@ class ListItem(db.Model):
         is_done=False,
         is_liked=False,
         position=0,
-        is_deleted=False,
     ):
         self.title = title
         self.is_done = is_done
         self.is_liked = is_liked
         self.position = position
-        self.is_deleted = is_deleted
 
+    def create(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return "Failed: something went wrong"
+
+    def update(self):
+        self.updated = db.func.now()
+        try:
+            db.session.add(self)
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return "Failed: something went wrong"
+
+    def delete(self):
+        try:
+            db.session.delete(self)
+            db.session.commit()
+        except:
+            db.session.rollback()
+            return "Failed: something went wrong"
 
 class ListItemSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -43,4 +64,4 @@ class ListItemSchema(SQLAlchemyAutoSchema):
         ordered = True
 
 
-list_item_schema = ListItemSchema(exclude=['created', 'updated', 'is_deleted'])
+list_item_schema = ListItemSchema(exclude=['created', 'updated'])

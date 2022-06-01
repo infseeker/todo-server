@@ -1,5 +1,5 @@
 from app import db
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from ..models.User import User
 
 
@@ -17,11 +17,38 @@ class List(db.Model):
         server_default=db.func.now(),
         server_onupdate=db.func.now(),
     )
-    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(self, title=None, is_liked=False):
         self.title = title or None
         self.is_liked = is_liked
+
+    def create(self):
+        try:
+            db.session.add(self)
+            db.session.commit()
+            return True, "List has been created"
+        except:
+            db.session.rollback()
+            return False, "Something went wrong"
+
+    def update(self):
+        self.updated = db.func.now()
+        try:
+            db.session.add(self)
+            db.session.commit()
+            return True, "List has been updated"
+        except:
+            db.session.rollback()
+            return False, "Something went wrong"
+
+    def delete(self):
+        try:
+            db.session.delete(self)
+            db.session.commit()
+            return True, "List has been deleted"
+        except:
+            db.session.rollback()
+            return False, "Something went wrong"
 
 
 class ListSchema(SQLAlchemyAutoSchema):
@@ -31,7 +58,11 @@ class ListSchema(SQLAlchemyAutoSchema):
         ordered = True
         include_relationships = True
         load_instance = True
+    id = auto_field(dump_only=True)
+    user_id = auto_field(dump_only=True)
+    created = auto_field(dump_only=True)
+    updated = auto_field(dump_only=True)
 
 
-list_schema = ListSchema(exclude=['user_id', 'created', 'updated', 'is_deleted'])
-lists_schema = ListSchema(exclude=['user_id', 'created', 'updated', 'is_deleted'], many=True)
+list_schema = ListSchema(exclude=['user_id', 'created', 'updated'])
+lists_schema = ListSchema(exclude=['user_id', 'created', 'updated'], many=True)
