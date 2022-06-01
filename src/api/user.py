@@ -360,7 +360,7 @@ def login():
                 login_user(user)
 
                 success, message = user.login()
-                
+
                 if success:
                     response = {
                         'success': True,
@@ -420,6 +420,33 @@ def get_user_data():
     return jsonify(response), 200
 
 
+@app.route('/todo/api/user/update', methods=['PUT'])
+@login_required
+def update():
+    data = request.json
+    user = current_user
+
+    password = data.get('password')
+    if password:
+        if not check_password()[0].json['success']:
+            return check_password()
+
+        user.password_hash = generate_password_hash(password)
+
+    success, message = user.update()
+
+    if not success:
+        response = {'success': True, 'message': message}
+        return jsonify(response), 400
+
+    response = {
+        'success': True,
+        'message': f"Current user has been updated",
+        'data': user_schema.dump(user),
+    }
+    return jsonify(response), 200
+
+
 @app.route('/todo/api/user/logout', methods=['GET'])
 @login_required
 def logout():
@@ -431,19 +458,20 @@ def logout():
     return jsonify(response)
 
 
-@app.route('/todo/api/user/delete', methods=['POST'])
+@app.route('/todo/api/user/delete', methods=['DELETE'])
+@login_required
 def delete():
     data = request.json
-    email = data.get('email')
     password = data.get('password')
-    user = User.query.filter(User.email == email.lower()).first()
+    user = User.query.get(current_user.id)
 
     if user and user.verify_password(password):
         if not user.is_deleted:
             logout_user()
             user.is_deleted = True
-            
+
             success, message = user.update()
+
             if success:
                 response = {
                     'success': True,
@@ -465,7 +493,7 @@ def delete():
 
     response = {
         'success': False,
-        'message': f"invalid email or password",
+        'message': f"Invalid password"
     }
 
     return jsonify(response), 400
@@ -491,7 +519,7 @@ def is_deleted():
     return jsonify(response), 400
 
 
-@app.route('/todo/api/user/delete-db', methods=['POST'])
+@app.route('/todo/api/user/delete-db', methods=['DELETE'])
 def delete_from_db():
     data = request.json
     email = data.get('email')
@@ -500,7 +528,7 @@ def delete_from_db():
 
     if user and user.verify_password(password):
         logout_user()
-        
+
         success, message = user.delete()
         if success:
             response = {
