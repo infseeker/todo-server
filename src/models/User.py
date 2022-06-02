@@ -2,7 +2,7 @@ import random
 
 from app import db
 from sqlalchemy import exc
-from marshmallow import ValidationError
+from marshmallow import EXCLUDE, INCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -97,6 +97,10 @@ class User(db.Model, UserMixin):
     def generate_access_code():
         return random.randint(1000, 9999)
 
+    @staticmethod
+    def get_user_by_email(email):
+        return User.query.filter_by(email=email.strip()).first()
+
 
 class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
@@ -104,6 +108,7 @@ class UserSchema(SQLAlchemyAutoSchema):
         ordered = True
         include_relationships = True
         load_instance = True
+        unknown = EXCLUDE
         exclude = ('password_hash',)
 
     password = auto_field('password_hash', load_only=True)

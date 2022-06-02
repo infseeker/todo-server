@@ -61,7 +61,7 @@ def check_email():
         response = {'success': False, 'message': "JSON: email field not found or empty"}
         return jsonify(response), 400
     else:
-        email = data.get('email').strip().lower()
+        email = data.get('email').lower()
 
         # email pattern (user@mail.com)
         pattern = re.compile('(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)')
@@ -207,7 +207,7 @@ def activate():
 
 @app.route('/todo/api/user/is-activated', methods=['GET'])
 def is_activated():
-    email = request.json.get('email')
+    email = request.json.get('email').strip()
     user = User.query.filter_by(email=email).first()
 
     if user:
@@ -236,7 +236,7 @@ def is_activated():
 @app.route('/todo/api/user/restore-email', methods=['POST'])
 def generate_restoration_email():
     data = request.json
-    email = data.get('email')
+    email = data.get('email').strip()
     user = User.query.filter_by(email=email).first()
 
     if user and user.is_activated:
@@ -286,7 +286,7 @@ def generate_restoration_email():
 def restore():
     data = request.json
     access_code = data.get('access_code')
-    email = data.get('email')
+    email = data.get('email').strip()
     password = data.get('password')
     pattern = re.compile(r"[0-9]{4}$")
 
@@ -345,7 +345,7 @@ def restore():
 @app.route('/todo/api/user/login', methods=['POST'])
 def login():
     data = request.json
-    username = data.get('username')
+    username = data.get('username').strip()
     password = data.get('password')
     db.func.lower(User.username) == db.func.lower(username)
     user = User.query.filter(
@@ -502,7 +502,7 @@ def delete():
 @app.route('/todo/api/user/is-deleted', methods=['GET'])
 def is_deleted():
     email = request.json.get('email')
-    user = User.query.filter_by(email=email).first()
+    user = User.get_user_by_email(email)
 
     if user:
         if user.is_deleted:
@@ -514,7 +514,7 @@ def is_deleted():
 
     response = {
         'success': False,
-        'message': f"user {email} is not found'",
+        'message': f"user {email.strip()} is not found'",
     }
     return jsonify(response), 400
 
@@ -522,7 +522,7 @@ def is_deleted():
 @app.route('/todo/api/user/delete-db', methods=['DELETE'])
 def delete_from_db():
     data = request.json
-    email = data.get('email')
+    email = data.get('email').strip()
     password = data.get('password')
     user = User.query.filter(User.email == email.lower()).first()
 
@@ -553,7 +553,7 @@ def delete_from_db():
 
 @app.route('/todo/api/user/is-deleted-db', methods=['GET'])
 def is_deleted_from_db():
-    email = request.json.get('email')
+    email = request.json.get('email').strip()
     user = User.query.filter_by(email=email).first()
 
     if user:
