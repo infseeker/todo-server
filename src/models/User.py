@@ -99,7 +99,7 @@ class User(db.Model, UserMixin):
 
     @staticmethod
     def get_user_by_email(email):
-        return User.query.filter_by(email=email.strip()).first()
+        return User.query.filter_by(email=email.lower().strip()).first()
 
 
 class UserSchema(SQLAlchemyAutoSchema):
@@ -133,4 +133,18 @@ user_schema = UserSchema(
         'access_code',
         'is_deleted',
     ]
+)
+
+
+users_schema = UserSchema(
+    exclude=[
+        'is_activated',
+        'is_admin',
+        'created',
+        'updated',
+        'last_login',
+        'access_code',
+        'is_deleted',
+    ],
+    many=True,
 )

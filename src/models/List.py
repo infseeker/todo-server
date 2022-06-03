@@ -64,5 +64,5 @@ class ListSchema(SQLAlchemyAutoSchema):
     updated = auto_field(dump_only=True)
 
 
-list_schema = ListSchema(exclude=['user_id', 'created', 'updated'])
-lists_schema = ListSchema(exclude=['user_id', 'created', 'updated'], many=True)
+list_schema = ListSchema(exclude=['user_id', 'updated'])
+lists_schema = ListSchema(exclude=['user_id', 'updated'], many=True)

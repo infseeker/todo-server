@@ -1,5 +1,5 @@
 from app import db
-from marshmallow_sqlalchemy import SQLAlchemyAutoSchema
+from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from ..models.List import List
 
 
@@ -27,7 +27,7 @@ class ListItem(db.Model):
         is_liked=False,
         position=0,
     ):
-        self.title = title
+        self.title = title or None
         self.is_done = is_done
         self.is_liked = is_liked
         self.position = position
@@ -36,32 +36,43 @@ class ListItem(db.Model):
         try:
             db.session.add(self)
             db.session.commit()
+            return True, "List item has been created"
         except:
             db.session.rollback()
-            return "Failed: something went wrong"
+            return False, "Something went wrong"
 
     def update(self):
         self.updated = db.func.now()
         try:
             db.session.add(self)
             db.session.commit()
+            return True, "List item has been updated"
         except:
             db.session.rollback()
-            return "Failed: something went wrong"
+            return False, "Something went wrong"
 
     def delete(self):
         try:
             db.session.delete(self)
             db.session.commit()
+            return True, "List item has been deleted"
         except:
             db.session.rollback()
-            return "Failed: something went wrong"
+            return False, "Something went wrong"
 
 class ListItemSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = ListItem
         include_fk = True
         ordered = True
+        include_relationships = True
+        load_instance = True
+    id = auto_field(dump_only=True)
+    list_id = auto_field(dump_only=True)
+    created = auto_field(dump_only=True)
+    updated = auto_field(dump_only=True)
+    position = auto_field(dump_only=True)
 
 
-list_item_schema = ListItemSchema(exclude=['created', 'updated'])
+list_item_schema = ListItemSchema(exclude=['list_id', 'updated'])
+list_items_schema = ListItemSchema(exclude=['updated'], many=True)

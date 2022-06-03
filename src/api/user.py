@@ -207,8 +207,8 @@ def activate():
 
 @app.route('/todo/api/user/is-activated', methods=['GET'])
 def is_activated():
-    email = request.json.get('email').strip()
-    user = User.query.filter_by(email=email).first()
+    email = request.json.get('email')
+    user = User.get_user_by_email(email)
 
     if user:
         if user.is_activated:
@@ -236,8 +236,8 @@ def is_activated():
 @app.route('/todo/api/user/restore-email', methods=['POST'])
 def generate_restoration_email():
     data = request.json
-    email = data.get('email').strip()
-    user = User.query.filter_by(email=email).first()
+    email = data.get('email')
+    user = User.get_user_by_email(email)
 
     if user and user.is_activated:
         user.access_code = User.generate_access_code()
@@ -286,11 +286,11 @@ def generate_restoration_email():
 def restore():
     data = request.json
     access_code = data.get('access_code')
-    email = data.get('email').strip()
+    email = data.get('email')
     password = data.get('password')
     pattern = re.compile(r"[0-9]{4}$")
 
-    user = User.query.filter_by(email=email).first()
+    user = User.get_user_by_email(email)
 
     if user:
         if user.is_activated:
@@ -522,9 +522,9 @@ def is_deleted():
 @app.route('/todo/api/user/delete-db', methods=['DELETE'])
 def delete_from_db():
     data = request.json
-    email = data.get('email').strip()
+    email = data.get('email')
     password = data.get('password')
-    user = User.query.filter(User.email == email.lower()).first()
+    user = User.get_user_by_email(email)
 
     if user and user.verify_password(password):
         logout_user()
@@ -553,8 +553,8 @@ def delete_from_db():
 
 @app.route('/todo/api/user/is-deleted-db', methods=['GET'])
 def is_deleted_from_db():
-    email = request.json.get('email').strip()
-    user = User.query.filter_by(email=email).first()
+    email = request.json.get('email')
+    user = User.get_user_by_email(email)
 
     if user:
         response = {
@@ -568,6 +568,17 @@ def is_deleted_from_db():
         'message': f"User {email} is not found'",
     }
     return jsonify(response), 200
+
+
+@app.route('/todo/api/user/all', methods=['GET'])
+def get_all_users():
+    users = User.query.all()
+    response = {
+        'success': True,
+        'message': "All users",
+        'data': users_schema.dump(users)
+    }
+    return jsonify(response)
 
 
 def send_email_with_access_code(user):
