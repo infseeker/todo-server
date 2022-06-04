@@ -2,7 +2,7 @@ import random
 
 from app import db
 from sqlalchemy import exc
-from marshmallow import EXCLUDE, INCLUDE
+from marshmallow import EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -40,6 +40,8 @@ class User(db.Model, UserMixin):
         password_hash=None,
         image_path=None,
         social_id=None,
+        is_activated=None,
+        is_admin=None
     ):
         self.username = username
         self.email = db.func.lower(email)
@@ -47,7 +49,8 @@ class User(db.Model, UserMixin):
         self.image_path = image_path
         self.social_id = social_id
         self.access_code = (User.generate_access_code(),)
-        self.is_activated = False
+        self.is_activated = is_activated
+        self.is_admin = is_admin
 
     def create(self):
         try:
@@ -105,14 +108,17 @@ class User(db.Model, UserMixin):
 class UserSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = User
-        ordered = True
+        include_fk = True
         include_relationships = True
         load_instance = True
+        ordered = True
         unknown = EXCLUDE
         exclude = ('password_hash',)
 
-    password = auto_field('password_hash', load_only=True)
     id = auto_field(dump_only=True)
+    username = auto_field()
+    email = auto_field()
+    password = auto_field('password_hash', load_only=True)
     social_id = auto_field(dump_only=True)
     is_activated = auto_field(dump_only=True)
     access_code = auto_field(dump_only=True)
@@ -132,19 +138,47 @@ user_schema = UserSchema(
         'last_login',
         'access_code',
         'is_deleted',
+        'social_id',
+        'image_path'
     ]
 )
 
 
 users_schema = UserSchema(
     exclude=[
-        'is_activated',
-        'is_admin',
+        # 'is_activated',
+        # 'is_admin',
         'created',
         'updated',
         'last_login',
         'access_code',
         'is_deleted',
+        'social_id',
+        'image_path'
     ],
     many=True,
 )
+
+
+class AdminUserSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = User
+        ordered = True
+        include_relationships = True
+        load_instance = True
+        unknown = EXCLUDE
+        exclude = ('password_hash', 'access_code')
+
+    id = auto_field(dump_only=True)
+    username = auto_field()
+    email = auto_field()
+    password = auto_field('password_hash', load_only=True)
+    social_id = auto_field(dump_only=True)
+    image_path = auto_field()
+    access_code = auto_field(dump_only=True)
+    created = auto_field(dump_only=True)
+    updated = auto_field(dump_only=True)
+    last_login = auto_field(dump_only=True)
+    is_activated = auto_field()
+    is_deleted = auto_field()
+    is_admin = auto_field()

@@ -26,7 +26,7 @@ def check_username():
         response = {'success': False, 'message': "JSON: Username field not found or empty"}
         return jsonify(response), 400
     else:
-        username = data.get('username').strip()
+        username = str(data.get('username')).strip()
 
         # username pattern (min: 3, max: 15, chars: a-z, A-Z)
         pattern = re.compile('^[a-zA-Z]{3,15}$')
@@ -61,7 +61,7 @@ def check_email():
         response = {'success': False, 'message': "JSON: email field not found or empty"}
         return jsonify(response), 400
     else:
-        email = data.get('email').lower()
+        email = str(data.get('email')).lower().strip()
 
         # email pattern (user@mail.com)
         pattern = re.compile('(^[a-zA-Z0-9_.+-]+@[a-zA-Z0-9-]+\.[a-zA-Z0-9-.]+$)')
@@ -87,7 +87,7 @@ def check_password():
         response = {'success': False, 'message': "JSON: Password field not found or empty"}
         return jsonify(response), 400
     else:
-        password = data.get('password')
+        password = str(data.get('password'))
 
         # password pattern ()
         pattern = re.compile('^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,15}$')
@@ -415,7 +415,7 @@ def get_user_data():
     response = {
         'success': True,
         'message': f"You are logged in",
-        'user-data': user_schema.dump(current_user),
+        'data': user_schema.dump(current_user),
     }
     return jsonify(response), 200
 

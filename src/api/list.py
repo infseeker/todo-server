@@ -19,7 +19,7 @@ def get_lists():
     lists = List.query.filter_by(user_id=current_user.id).order_by('id')
     response = {
         'success': True,
-        'message': f"All lists of current user",
+        'message': f"Lists of current user",
         'user_id': current_user.id,
         'data': lists_schema.dump(lists),
     }
@@ -142,6 +142,7 @@ def get_list(list_id):
         'success': True,
         'message': f"List items for list #{list.id}",
         'user_id': current_user.id,
+        'list_id': list.id,
         'data': list_items_schema.dump(list_items),
     }
     return jsonify(response), 200

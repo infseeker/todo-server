@@ -1,4 +1,5 @@
 from app import db
+from marshmallow import EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from ..models.User import User
 
@@ -55,14 +56,35 @@ class ListSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = List
         include_fk = True
-        ordered = True
         include_relationships = True
         load_instance = True
+        ordered = True
+        unknown = EXCLUDE
+
     id = auto_field(dump_only=True)
     user_id = auto_field(dump_only=True)
+    title = auto_field()
+    is_liked = auto_field()
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)
 
 
-list_schema = ListSchema(exclude=['user_id', 'updated'])
-lists_schema = ListSchema(exclude=['user_id', 'updated'], many=True)
+list_schema = ListSchema(exclude=['updated'])
+lists_schema = ListSchema(exclude=['updated'], many=True)
+
+
+class AdminListSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = List
+        include_fk = True
+        include_relationships = True
+        load_instance = True
+        ordered = True
+        unknown = EXCLUDE
+
+    id = auto_field(dump_only=True)
+    user_id = auto_field(dump_only=True)
+    title = auto_field()
+    is_liked = auto_field()
+    created = auto_field(dump_only=True)
+    updated = auto_field(dump_only=True)

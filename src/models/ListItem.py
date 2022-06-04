@@ -1,4 +1,5 @@
 from app import db
+from marshmallow import EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from ..models.List import List
 
@@ -64,15 +65,39 @@ class ListItemSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = ListItem
         include_fk = True
-        ordered = True
         include_relationships = True
         load_instance = True
+        ordered = True
+        unknown = EXCLUDE
+
     id = auto_field(dump_only=True)
     list_id = auto_field(dump_only=True)
+    title = auto_field()
+    is_done = auto_field()
+    is_liked = auto_field()
+    position = auto_field(dump_only=True)
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)
-    position = auto_field(dump_only=True)
 
 
-list_item_schema = ListItemSchema(exclude=['list_id', 'updated'])
+list_item_schema = ListItemSchema(exclude=['updated'])
 list_items_schema = ListItemSchema(exclude=['updated'], many=True)
+
+
+class AdminListItemSchema(SQLAlchemyAutoSchema):
+    class Meta:
+        model = ListItem
+        include_fk = True
+        include_relationships = True
+        load_instance = True
+        ordered = True
+        unknown = EXCLUDE
+
+    id = auto_field(dump_only=True)
+    list_id = auto_field(dump_only=True)
+    title = auto_field()
+    is_done = auto_field()
+    is_liked = auto_field()
+    position = auto_field(dump_only=True)
+    created = auto_field(dump_only=True)
+    updated = auto_field(dump_only=True)
