@@ -41,7 +41,8 @@ class User(db.Model, UserMixin):
         image_path=None,
         social_id=None,
         is_activated=None,
-        is_admin=None
+        is_admin=None,
+        is_deleted=None
     ):
         self.username = username
         self.email = db.func.lower(email)
@@ -51,6 +52,7 @@ class User(db.Model, UserMixin):
         self.access_code = (User.generate_access_code(),)
         self.is_activated = is_activated
         self.is_admin = is_admin
+        self.is_deleted = is_deleted
 
     def create(self):
         try:

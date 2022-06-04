@@ -98,21 +98,25 @@ def get_user(user_id):
 @admin.require(403)
 def update_user(user_id):
     data = request.json
-    username = data.get('username').strip()
-    email = data.get('email').strip()
     user = User.query.get(user_id)
 
     if not user:
         response = {'success': False, 'message': f"User #{user_id} not found"}
         return jsonify(response), 404
 
-    if not user.username == username and not check_username()[0].json['success']:
+    username = data.get('username') or user.username
+    email = data.get('email') or user.email
+
+    if not user.username == username.strip() and not check_username()[0].json['success']:
         return check_username()
-    if not user.email == email and not check_email()[0].json['success']:
+
+    if not user.email == email.strip() and not check_email()[0].json['success']:
         return check_email()
 
     try:
-        user = AdminUserSchema(exclude=['password']).load(data, instance=user, session=db.session)
+        user = AdminUserSchema(exclude=['password']).load(
+            data, instance=user, session=db.session, partial=True
+        )
     except (ValidationError, TypeError):
         response = {
             'success': False,
@@ -188,7 +192,7 @@ def get_user_lists(user_id):
     response = {
         'success': True,
         'message': f"Lists of user #{user.id}",
-        'user_id': current_user.id,
+        'user_id': user.id,
         'data': AdminListSchema(many=True).dump(lists),
     }
     return jsonify(response), 200
@@ -417,7 +421,9 @@ def update_user_list_item(user_id, list_id, list_item_id):
         response = {'success': False, 'message': f"List #{list_id} for user #{user_id} not found"}
         return jsonify(response), 404
 
-    list_item = ListItem.query.filter((ListItem.id == list_item_id) & (ListItem.list_id == list.id)).first()
+    list_item = ListItem.query.filter(
+        (ListItem.id == list_item_id) & (ListItem.list_id == list.id)
+    ).first()
 
     if not list_item:
         response = {
@@ -477,7 +483,9 @@ def delete_user_list_item(user_id, list_id, list_item_id):
         response = {'success': False, 'message': f"List #{list_id} for user #{user_id} not found"}
         return jsonify(response), 404
 
-    list_item = ListItem.query.filter((ListItem.id == list_item_id) & (ListItem.list_id == list.id)).first()
+    list_item = ListItem.query.filter(
+        (ListItem.id == list_item_id) & (ListItem.list_id == list.id)
+    ).first()
 
     if not list_item:
         response = {
