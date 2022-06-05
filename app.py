@@ -1,7 +1,7 @@
 import os
 from sched import scheduler
 
-from flask import Flask
+from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
@@ -64,7 +64,24 @@ from src.api import *
 
 @app.route('/', methods=['GET'])
 def index():
-    return "ToDo Project API"
+    response = {
+        'success': True,
+        'message': "ToDo Project Index URL",
+        'path': '/',
+        'data': {'action': 'index'}
+    }
+    return jsonify(response), 200
+
+
+@app.route('/todo/api', methods=['GET'])
+def api():
+    response = {
+        'success': True,
+        'message': "ToDo Project API",
+        'path': '/todo/api',
+        'data': {'action': 'api'}
+    }
+    return jsonify(response), 200
 
 
 # run app
