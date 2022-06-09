@@ -237,60 +237,96 @@ def is_activated():
 def generate_restoration_email():
     data = request.json
     email = data.get('email')
+
+    if not email or not email.strip():
+        response = {
+            'success': False,
+            'message': f"Email field must not be empty",
+        }
+        return jsonify(response), 400
+
+    email = email.strip()
     user = User.get_user_by_email(email)
 
-    if user and user.is_activated:
-        user.access_code = User.generate_access_code()
-
-        success, message = user.update()
-
-        if not success:
-            response = {
-                'success': False,
-                'message': message,
-            }
-            return jsonify(response), 400
-
-        send_email_with_access_code(user)
-
-        @scheduler.task(
-            'interval',
-            id=f'delete_access_code_for_{user.id}_from_db',
-            seconds=30,
-            misfire_grace_time=600,
-        )
-        def delete_access_code_from_db():
-            db_user = User.query.get(user.id)
-
-            if db_user and db_user.is_activated:
-                db_user.access_code = None
-                db_user.update()
-
-            scheduler.remove_job(f'delete_access_code_for_{user.id}_from_db')
-
-        response = {
-            'success': True,
-            'message': f"Restoration code was sent to {user.email}",
-        }
-        return jsonify(response), 200
-
-    else:
+    if not user:
         response = {
             'success': False,
             'message': f"User with {email.lower()} was not found",
         }
         return jsonify(response), 404
 
+    if not user.is_activated:
+        response = {
+            'success': False,
+            'message': f"User with {email.lower()} is not activated",
+        }
+        return jsonify(response), 400
+
+    user.access_code = User.generate_access_code()
+
+    success, message = user.update()
+
+    if not success:
+        response = {
+            'success': False,
+            'message': message,
+        }
+        return jsonify(response), 400
+
+    send_email_with_access_code(user)
+
+    @scheduler.task(
+        'interval',
+        id=f'delete_access_code_for_{user.id}_from_db',
+        seconds=30,
+        misfire_grace_time=600,
+    )
+    def delete_access_code_from_db():
+        db_user = User.query.get(user.id)
+
+        if db_user and db_user.is_activated:
+            db_user.access_code = None
+            db_user.update()
+
+        scheduler.remove_job(f'delete_access_code_for_{user.id}_from_db')
+
+    response = {
+        'success': True,
+        'message': f"Restoration code was sent to {user.email}",
+    }
+    return jsonify(response), 200
+
 
 @app.route('/todo/api/user/restore', methods=['POST'])
 def restore():
     data = request.json
-    access_code = data.get('access_code')
     email = data.get('email')
     password = data.get('password')
+    access_code = data.get('access_code')
     pattern = re.compile(r"[0-9]{4}$")
 
-    user = User.get_user_by_email(email)
+    if not email or not email.strip():
+        response = {
+            'success': False,
+            'message': f"Email field must not be empty",
+        }
+        return jsonify(response), 400
+
+    if not password:
+        response = {
+            'success': False,
+            'message': f"Password field must not be empty",
+        }
+        return jsonify(response), 400
+
+    if not access_code or not access_code.strip():
+        response = {
+            'success': False,
+            'message': f"Access code field must not be empty",
+        }
+        return jsonify(response), 400
+
+    user = User.get_user_by_email(email.strip())
 
     if user:
         if user.is_activated:
@@ -465,6 +501,13 @@ def delete():
     password = data.get('password')
     user = User.query.get(current_user.id)
 
+    if not password:
+        response = {
+            'success': False,
+            'message': f"Password field must not be empty",
+        }
+        return jsonify(response), 400
+
     if user and user.verify_password(password):
         if not user.is_deleted:
             logout_user()
@@ -491,10 +534,7 @@ def delete():
             }
             return jsonify(response), 200
 
-    response = {
-        'success': False,
-        'message': f"Invalid password"
-    }
+    response = {'success': False, 'message': f"Invalid password"}
 
     return jsonify(response), 400
 
@@ -573,11 +613,7 @@ def is_deleted_from_db():
 @app.route('/todo/api/user/all', methods=['GET'])
 def get_all_users():
     users = User.query.all()
-    response = {
-        'success': True,
-        'message': "All users",
-        'data': users_schema.dump(users)
-    }
+    response = {'success': True, 'message': "All users", 'data': users_schema.dump(users)}
     return jsonify(response)
 
 

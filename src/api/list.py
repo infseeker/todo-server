@@ -42,7 +42,7 @@ def create_list():
 
     list.user_id = current_user.id
 
-    if not list.title:
+    if not list.title or not list.title.strip():
         response = {
             'success': False,
             'message': f"List title must not be empty",
@@ -84,7 +84,7 @@ def update_list(list_id):
         }
         return jsonify(response), 400
 
-    if not list.title:
+    if not list.title or not list.title.strip():
         response = {'success': False, 'message': f"List title must not be empty"}
         return jsonify(response), 400
 

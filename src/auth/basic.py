@@ -32,7 +32,7 @@ app.config.update(
 # CORS
 cors = CORS(
     app,
-    resources={r'*': {'origins': 'http://localhost:3000'}},
+    resources={r'*': {'origins': ['http://localhost:3000']}},
     expose_headers=['Content-Type', 'X-CSRFToken'],
     supports_credentials=True,
 )
