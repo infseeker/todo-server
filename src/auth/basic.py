@@ -32,7 +32,11 @@ app.config.update(
 # CORS
 cors = CORS(
     app,
-    resources={r'*': {'origins': ['http://localhost:3000']}},
+    resources={
+        r'*': {
+            'origins': "['http://192.168.0.2:3000', 'http://127.0.0.1:3000', 'http://dev.localhost:3000', 'http://localhost:3000']"
+        }
+    },
     expose_headers=['Content-Type', 'X-CSRFToken'],
     supports_credentials=True,
 )
@@ -41,6 +45,9 @@ cors = CORS(
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.session_protection = 'strong'
+# app.config['SERVER_NAME'] = 'dev.localhost:8080'
+# app.config['SESSION_COOKIE_DOMAIN'] = 'dev.localhost'
+# app.config['REMEMBER_COOKIE_DOMAIN'] = 'dev.localhost'
 
 
 @login_manager.user_loader

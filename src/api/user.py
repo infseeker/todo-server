@@ -393,7 +393,7 @@ def login():
         if user.is_activated:
             if not user.is_deleted:
 
-                login_user(user)
+                login_user(user, remember=True)
 
                 success, message = user.login()
 
