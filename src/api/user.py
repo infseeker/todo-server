@@ -129,8 +129,10 @@ def register():
 
         send_email_with_access_code(user)
 
+        delay = 30
+
         @scheduler.task(
-            'interval', id=f'delete_user_{user.id}_from_db', seconds=30, misfire_grace_time=600
+            'interval', id=f'delete_user_{user.id}_from_db', seconds=delay, misfire_grace_time=600
         )
         def delete_user_from_db():
             db_user = User.query.get(user.id)
@@ -138,7 +140,11 @@ def register():
                 db_user.delete()
             scheduler.remove_job(f'delete_user_{user.id}_from_db')
 
-        response = {'success': True, 'message': f"Email has been sent to {user.email}"}
+        response = {
+            'success': True,
+            'message': f"Email has been sent to {user.email}",
+            'delay': delay
+            }
         return jsonify(response), 200
     else:
         if not check_username()[0].json['success']:
@@ -275,10 +281,12 @@ def generate_restoration_email():
 
     send_email_with_access_code(user)
 
+    delay = 30
+
     @scheduler.task(
         'interval',
         id=f'delete_access_code_for_{user.id}_from_db',
-        seconds=30,
+        seconds=delay,
         misfire_grace_time=600,
     )
     def delete_access_code_from_db():
@@ -293,6 +301,7 @@ def generate_restoration_email():
     response = {
         'success': True,
         'message': f"Restoration code was sent to {user.email}",
+        'delay': delay
     }
     return jsonify(response), 200
 

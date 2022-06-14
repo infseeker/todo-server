@@ -91,7 +91,7 @@ if __name__ == '__main__':
 
 # source env/bin/activate
 # export FLASK_ENV=development
-# flask run --host=0.0.0.0
+# flask run --host=0.0.0.0 --port=8080
 
 # Auth: Flask-login (Basic)
 # OAuth: Yandex, VK
