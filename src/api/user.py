@@ -143,7 +143,7 @@ def register():
         response = {
             'success': True,
             'message': f"Email has been sent to {user.email}",
-            'delay': delay
+            'delay': delay * 1000
             }
         return jsonify(response), 200
     else:
@@ -301,7 +301,7 @@ def generate_restoration_email():
     response = {
         'success': True,
         'message': f"Restoration code was sent to {user.email}",
-        'delay': delay
+        'delay': delay * 1000
     }
     return jsonify(response), 200
 
