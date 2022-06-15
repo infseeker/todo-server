@@ -46,13 +46,20 @@ cors = CORS(
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.session_protection = 'strong'
+
+
 @login_manager.unauthorized_handler
 def unauthorized():
-    response = {
-        'success': False,
-        'message': 'You are not authenticated'
-    }
+    response = {'success': False, 'message': 'You are not authenticated'}
     return jsonify(response), 401
+
+
+@app.errorhandler(403)
+def forbidden(e):
+    response = {'success': False, 'message': 'You do not have permissions'}
+    return jsonify(response), 403
+
+
 # app.config['SERVER_NAME'] = 'dev.localhost:8080'
 # app.config['SESSION_COOKIE_DOMAIN'] = 'dev.localhost'
 # app.config['REMEMBER_COOKIE_DOMAIN'] = 'dev.localhost'
