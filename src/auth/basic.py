@@ -2,6 +2,7 @@
 # OAuth: Google, Yandex, VK, Apple
 
 import os
+from flask import jsonify
 
 from flask_cors import CORS
 from flask_login import LoginManager, current_user
@@ -45,6 +46,13 @@ cors = CORS(
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.session_protection = 'strong'
+@login_manager.unauthorized_handler
+def unauthorized():
+    response = {
+        'success': False,
+        'message': 'You are not authenticated'
+    }
+    return jsonify(response), 401
 # app.config['SERVER_NAME'] = 'dev.localhost:8080'
 # app.config['SESSION_COOKIE_DOMAIN'] = 'dev.localhost'
 # app.config['REMEMBER_COOKIE_DOMAIN'] = 'dev.localhost'
