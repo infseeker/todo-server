@@ -59,6 +59,11 @@ def forbidden(e):
     response = {'success': False, 'message': 'You do not have permissions'}
     return jsonify(response), 403
 
+@app.errorhandler(400)
+def forbidden(e):
+    response = {'success': False, 'message': e.description}
+    return jsonify(response), 400
+
 
 # app.config['SERVER_NAME'] = 'dev.localhost:8080'
 # app.config['SESSION_COOKIE_DOMAIN'] = 'dev.localhost'
