@@ -390,9 +390,25 @@ def restore():
 @app.route('/todo/api/user/login', methods=['POST'])
 def login():
     data = request.json
-    username = data.get('username').strip()
+    username = data.get('username')
     password = data.get('password')
-    db.func.lower(User.username) == db.func.lower(username)
+    
+    if not username or not username.strip():
+        response = {
+            'success': False,
+            'message': f"Username field must not be empty",
+        }
+        return jsonify(response), 400
+
+    if not password:
+        response = {
+            'success': False,
+            'message': f"Password field must not be empty",
+        }
+        return jsonify(response), 400
+    
+    username = username.strip()
+    
     user = User.query.filter(
         (db.func.lower(User.username) == db.func.lower(username))
         | (db.func.lower(User.email) == db.func.lower(username))
