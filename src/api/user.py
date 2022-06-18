@@ -464,10 +464,19 @@ def check_session():
         }
         return jsonify(response), 401
 
+    if not current_user.is_admin:
+        response = {
+            'success': True,
+            'message': f"You are logged in",
+            'login': True
+        }
+        return jsonify(response), 200
+
     response = {
         'success': True,
         'message': f"You are logged in",
-        'login': True
+        'login': True,
+        'admin': True
     }
     return jsonify(response), 200
 
