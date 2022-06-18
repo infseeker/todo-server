@@ -143,8 +143,8 @@ def register():
         response = {
             'success': True,
             'message': f"Email has been sent to {user.email}",
-            'delay': delay * 1000
-            }
+            'delay': delay * 1000,
+        }
         return jsonify(response), 200
     else:
         if not check_username()[0].json['success']:
@@ -301,7 +301,7 @@ def generate_restoration_email():
     response = {
         'success': True,
         'message': f"Restoration code was sent to {user.email}",
-        'delay': delay * 1000
+        'delay': delay * 1000,
     }
     return jsonify(response), 200
 
@@ -392,7 +392,7 @@ def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
-    
+
     if not username or not username.strip():
         response = {
             'success': False,
@@ -406,9 +406,9 @@ def login():
             'message': f"Password field must not be empty",
         }
         return jsonify(response), 400
-    
+
     username = username.strip()
-    
+
     user = User.query.filter(
         (db.func.lower(User.username) == db.func.lower(username))
         | (db.func.lower(User.email) == db.func.lower(username))
@@ -460,12 +460,14 @@ def check_session():
         response = {
             'success': False,
             'message': f"You are not authenticated",
+            'login': False
         }
         return jsonify(response), 401
 
     response = {
         'success': True,
         'message': f"You are logged in",
+        'login': True
     }
     return jsonify(response), 200
 
