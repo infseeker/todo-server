@@ -423,10 +423,19 @@ def login():
                 success, message = user.login()
 
                 if success:
-                    response = {
-                        'success': True,
-                        'message': f"You are logged in",
-                    }
+                    if not user.is_admin:
+                        response = {
+                            'success': True,
+                            'message': f"You are logged in",
+                            'login': True
+                        }
+                    else:
+                        response = {
+                            'success': True,
+                            'message': f"You are logged in",
+                            'login': True,
+                            'admin': True
+                        }
                     return jsonify(response), 200
                 else:
                     response = {
@@ -438,6 +447,7 @@ def login():
                 response = {
                     'success': False,
                     'message': f"Your account was deleted",
+                    'deleted': True
                 }
                 return jsonify(response), 401
         else:
