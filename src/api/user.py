@@ -13,7 +13,7 @@ from ..auth.basic import *
 @app.route('/todo/api/user/csrf', methods=['GET'])
 def get_csrf():
     token = generate_csrf()
-    response = jsonify({'success': True, 'message': f"CSRF cookie set", 'token': token})
+    response = jsonify({'success': True, 'message': f"CSRF cookie set"})
     response.headers.set('X-CSRFToken', token)
     return response, 200
 
@@ -424,17 +424,13 @@ def login():
 
                 if success:
                     if not user.is_admin:
-                        response = {
-                            'success': True,
-                            'message': f"You are logged in",
-                            'login': True
-                        }
+                        response = {'success': True, 'message': f"You are logged in", 'login': True}
                     else:
                         response = {
                             'success': True,
                             'message': f"You are logged in",
                             'login': True,
-                            'admin': True
+                            'admin': True,
                         }
                     return jsonify(response), 200
                 else:
@@ -447,7 +443,7 @@ def login():
                 response = {
                     'success': False,
                     'message': f"Your account was deleted",
-                    'deleted': True
+                    'deleted': True,
                 }
                 return jsonify(response), 401
         else:
@@ -467,27 +463,14 @@ def login():
 @app.route('/todo/api/user/session', methods=['GET'])
 def check_session():
     if not current_user.is_authenticated:
-        response = {
-            'success': False,
-            'message': f"You are not authenticated",
-            'login': False
-        }
+        response = {'success': False, 'message': f"You are not authenticated", 'login': False}
         return jsonify(response), 401
 
     if not current_user.is_admin:
-        response = {
-            'success': True,
-            'message': f"You are logged in",
-            'login': True
-        }
+        response = {'success': True, 'message': f"You are logged in", 'login': True}
         return jsonify(response), 200
 
-    response = {
-        'success': True,
-        'message': f"You are logged in",
-        'login': True,
-        'admin': True
-    }
+    response = {'success': True, 'message': f"You are logged in", 'login': True, 'admin': True}
     return jsonify(response), 200
 
 
