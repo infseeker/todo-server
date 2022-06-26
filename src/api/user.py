@@ -1,4 +1,3 @@
-from collections import namedtuple
 import re
 from flask import request, jsonify
 from marshmallow import ValidationError
@@ -109,6 +108,16 @@ def register():
         and check_password()[0].json['success']
     ):
         data = request.json
+        token = data.get('token')
+
+        if token:
+            success, message = verify_recaptcha_token(token)
+            if not success:
+                response = {
+                    'success': success,
+                    'message': message
+                }
+                return jsonify(response), 403
 
         try:
             user = user_schema.load(data, session=db.session)
@@ -162,6 +171,16 @@ def activate():
     email = data.get('email')
     access_code = data.get('access_code')
     pattern = re.compile(r"[0-9]{4}$")
+    token = data.get('token')
+
+    if token:
+        success, message = verify_recaptcha_token(token)
+        if not success:
+            response = {
+                'success': success,
+                'message': message
+            }
+            return jsonify(response), 403
 
     user = User.query.filter_by(email=email).first()
 
@@ -244,6 +263,16 @@ def is_activated():
 def generate_restoration_email():
     data = request.json
     email = data.get('email')
+    token = data.get('token')
+
+    if token:
+        success, message = verify_recaptcha_token(token)
+        if not success:
+            response = {
+                'success': success,
+                'message': message
+            }
+            return jsonify(response), 403
 
     if not email or not email.strip():
         response = {
@@ -314,6 +343,16 @@ def restore():
     password = data.get('password')
     access_code = data.get('access_code')
     pattern = re.compile(r"[0-9]{4}$")
+    token = data.get('token')
+
+    if token:
+        success, message = verify_recaptcha_token(token)
+        if not success:
+            response = {
+                'success': success,
+                'message': message
+            }
+            return jsonify(response), 403
 
     if not email or not email.strip():
         response = {
@@ -394,19 +433,15 @@ def login():
     username = data.get('username')
     password = data.get('password')
     token = data.get('token')
-    recaptcha = ''
 
     if token:
-        recaptcha = verify_recaptcha_token(token)
-
-        if recaptcha and recaptcha['score']:
-            if recaptcha['score'] < 0.4:
-                response = {
-                    'success': False,
-                    'message': f"ReCaptcha verification failed",
-                    'recaptcha': recaptcha,
-                }
-                return jsonify(response), 403
+        success, message = verify_recaptcha_token(token)
+        if not success:
+            response = {
+                'success': success,
+                'message': message
+            }
+            return jsonify(response), 403
 
     if not username or not username.strip():
         response = {
@@ -480,7 +515,6 @@ def login():
     response = {
         'success': False,
         'message': f"Invalid username or password",
-        'recaptcha': recaptcha
     }
     return jsonify(response), 400
 
@@ -705,4 +739,14 @@ def send_email_with_access_code(user):
 def verify_recaptcha_token(token):
     secret = app.config['RECAPTCHA_SECRET_KEY']
     request = {'secret': secret, 'response': token}
-    return requests.post('https://www.google.com/recaptcha/api/siteverify', data=request).json()
+
+    try:
+        recaptcha = requests.post('https://www.google.com/recaptcha/api/siteverify', data=request).json()
+
+        if not recaptcha or not recaptcha['score'] or recaptcha['score'] < 0.4:
+            return False, f"ReCaptcha verification failed"
+        
+        return True, f"ReCaptcha verification passed"
+        
+    except:
+        return False, "reCaptcha: something went wrong"
