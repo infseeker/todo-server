@@ -42,17 +42,19 @@ mail_settings = {
     'MAIL_USE_TLS': False,
     'MAIL_USE_SSL': True,
     'MAIL_USERNAME': os.environ['EMAIL_USER'],
-    'MAIL_PASSWORD': os.environ['EMAIL_PASSWORD']
+    'MAIL_PASSWORD': os.environ['EMAIL_PASSWORD'],
 }
 
 app.config.update(mail_settings)
 mail = Mail(app)
 
 
+# reCaptcha config
+app.config['RECAPTCHA_SECRET_KEY'] = os.environ['RECAPTCHA_SECRET_KEY']
+
+
 # scheduler
-scheduler_settings = {
-    'SCHEDULER_API_ENABLED': True
-}
+scheduler_settings = {'SCHEDULER_API_ENABLED': True}
 app.config.update(scheduler_settings)
 scheduler = APScheduler()
 scheduler.init_app(app)
@@ -68,7 +70,7 @@ def index():
         'success': True,
         'message': "ToDo Project Index URL",
         'path': '/',
-        'data': {'action': 'index'}
+        'data': {'action': 'index'},
     }
     return jsonify(response), 200
 
@@ -79,7 +81,7 @@ def api():
         'success': True,
         'message': "ToDo Project API",
         'path': '/todo/api',
-        'data': {'action': 'api'}
+        'data': {'action': 'api'},
     }
     return jsonify(response), 200
 
@@ -92,6 +94,3 @@ if __name__ == '__main__':
 # source env/bin/activate
 # export FLASK_ENV=development
 # flask run --host=0.0.0.0 --port=8080
-
-# Auth: Flask-login (Basic)
-# OAuth: Yandex, VK

@@ -1,10 +1,11 @@
+from collections import namedtuple
 import re
 from flask import request, jsonify
 from marshmallow import ValidationError
-from sqlalchemy import exc
 from flask_login import current_user, login_user, login_required, logout_user
 from werkzeug.exceptions import *
 from flask_mail import Message
+import requests
 from app import app, db, mail, scheduler
 from ..models.User import *
 from ..auth.basic import *
@@ -392,6 +393,20 @@ def login():
     data = request.json
     username = data.get('username')
     password = data.get('password')
+    token = data.get('token')
+    recaptcha = ''
+
+    if token:
+        recaptcha = verify_recaptcha_token(token)
+
+        if recaptcha and recaptcha['score']:
+            if recaptcha['score'] < 0.4:
+                response = {
+                    'success': False,
+                    'message': f"ReCaptcha verification failed",
+                    'recaptcha': recaptcha,
+                }
+                return jsonify(response), 403
 
     if not username or not username.strip():
         response = {
@@ -465,6 +480,7 @@ def login():
     response = {
         'success': False,
         'message': f"Invalid username or password",
+        'recaptcha': recaptcha
     }
     return jsonify(response), 400
 
@@ -684,3 +700,9 @@ def send_email_with_access_code(user):
             )
 
         mail.send(msg)
+
+
+def verify_recaptcha_token(token):
+    secret = app.config['RECAPTCHA_SECRET_KEY']
+    request = {'secret': secret, 'response': token}
+    return requests.post('https://www.google.com/recaptcha/api/siteverify', data=request).json()
