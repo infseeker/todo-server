@@ -424,13 +424,19 @@ def login():
 
                 if success:
                     if not user.is_admin:
-                        response = {'success': True, 'message': f"You are logged in", 'login': True}
+                        response = {
+                            'success': True,
+                            'message': f"You are logged in",
+                            'login': True,
+                            'email': user.email,
+                        }
                     else:
                         response = {
                             'success': True,
                             'message': f"You are logged in",
                             'login': True,
                             'admin': True,
+                            'email': user.email,
                         }
                     return jsonify(response), 200
                 else:
@@ -444,12 +450,15 @@ def login():
                     'success': False,
                     'message': f"Your account was deleted",
                     'deleted': True,
+                    'email': user.email,
                 }
                 return jsonify(response), 401
         else:
             response = {
                 'success': False,
                 'message': f"Your account is not activated",
+                'non_activated': True,
+                'email': user.email,
             }
             return jsonify(response), 401
 
@@ -467,10 +476,21 @@ def check_session():
         return jsonify(response), 401
 
     if not current_user.is_admin:
-        response = {'success': True, 'message': f"You are logged in", 'login': True}
+        response = {
+            'success': True,
+            'message': f"You are logged in",
+            'login': True,
+            'email': current_user.email,
+        }
         return jsonify(response), 200
 
-    response = {'success': True, 'message': f"You are logged in", 'login': True, 'admin': True}
+    response = {
+        'success': True,
+        'message': f"You are logged in",
+        'login': True,
+        'admin': True,
+        'email': current_user.email,
+    }
     return jsonify(response), 200
 
 
