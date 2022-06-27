@@ -720,17 +720,17 @@ def send_email_with_access_code(user):
     with app.app_context():
         if not user.is_activated:
             msg = Message(
-                subject="ToDo: User has been registered",
+                subject="ToDo: Пользователь зарегистрирован",
                 sender=app.config.get("MAIL_USERNAME"),
                 recipients=[f'<{user.email}>', '<infseek@gmail.com>'],
-                body=f"Activation code is valid for 5 minutes.\n\nUsername: {user.username}\nEmail: {user.email}\nActivation code: {user.access_code}",
+                body=f"Код активации действителен в течение 15 минут.\n\Имя пользователя: {user.username}\nEmail: {user.email}\nКод активации: {user.access_code}",
             )
         else:
             msg = Message(
-                subject="ToDo: Restoration code",
+                subject="ToDo: Восстановление доступа",
                 sender=app.config.get("MAIL_USERNAME"),
                 recipients=[f'<{user.email}>', '<infseek@gmail.com>'],
-                body=f"Restoration code is valid for 60 minutes.\n\nUsername: {user.username}\nEmail: {user.email}\nActivation code: {user.access_code}",
+                body=f"Код восстановления действителен в течение 60 минут.\n\Имя пользователя: {user.username}\nEmail: {user.email}\nКод восстановления: {user.access_code}",
             )
 
         mail.send(msg)
