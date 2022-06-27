@@ -29,6 +29,7 @@ app.config.update(
 
 # CSRF Protection
 csrf = CSRFProtect(app)
+app.config['WTF_CSRF_TIME_LIMIT'] = None
 
 # CORS
 cors = CORS(
