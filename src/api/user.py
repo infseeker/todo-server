@@ -90,7 +90,7 @@ def check_password():
         password = str(data.get('password'))
 
         # password pattern ()
-        pattern = re.compile('^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@$!%*#?&]{8,15}$')
+        pattern = re.compile('^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@\-$!%*#?&]{8,15}$')
 
         if not pattern.match(password):
             response = {'success': False, 'message': f"Password has an invalid format"}
