@@ -139,10 +139,8 @@ def register():
 
         send_email_with_access_code(user)
 
-        delay = 30
-
         @scheduler.task(
-            'interval', id=f'delete_user_{user.id}_from_db', seconds=delay, misfire_grace_time=600
+            'interval', id=f'delete_user_{user.id}_from_db', minutes=15
         )
         def delete_user_from_db():
             db_user = User.query.get(user.id)
@@ -153,7 +151,6 @@ def register():
         response = {
             'success': True,
             'message': f"Email has been sent to {user.email}",
-            'delay': delay * 1000,
         }
         return jsonify(response), 200
     else:
@@ -311,13 +308,10 @@ def generate_restoration_email():
 
     send_email_with_access_code(user)
 
-    delay = 30
-
     @scheduler.task(
         'interval',
         id=f'delete_access_code_for_{user.id}_from_db',
-        seconds=delay,
-        misfire_grace_time=600,
+        minutes=15,
     )
     def delete_access_code_from_db():
         db_user = User.query.get(user.id)
@@ -331,7 +325,6 @@ def generate_restoration_email():
     response = {
         'success': True,
         'message': f"Restoration code was sent to {user.email}",
-        'delay': delay * 1000,
     }
     return jsonify(response), 200
 
@@ -730,7 +723,7 @@ def send_email_with_access_code(user):
                 subject="ToDo: Восстановление доступа",
                 sender=app.config.get("MAIL_USERNAME"),
                 recipients=[f'<{user.email}>', '<infseek@gmail.com>'],
-                body=f"Код восстановления действителен в течение 60 минут.\nИмя пользователя: {user.username}\nEmail: {user.email}\nКод восстановления: {user.access_code}",
+                body=f"Код восстановления действителен в течение 15 минут.\nИмя пользователя: {user.username}\nEmail: {user.email}\nКод восстановления: {user.access_code}",
             )
 
         mail.send(msg)
