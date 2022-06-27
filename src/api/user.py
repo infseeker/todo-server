@@ -723,14 +723,14 @@ def send_email_with_access_code(user):
                 subject="ToDo: Пользователь зарегистрирован",
                 sender=app.config.get("MAIL_USERNAME"),
                 recipients=[f'<{user.email}>', '<infseek@gmail.com>'],
-                body=f"Код активации действителен в течение 15 минут.\n\Имя пользователя: {user.username}\nEmail: {user.email}\nКод активации: {user.access_code}",
+                body=f"Код активации действителен в течение 15 минут.\nИмя пользователя: {user.username}\nEmail: {user.email}\nКод активации: {user.access_code}",
             )
         else:
             msg = Message(
                 subject="ToDo: Восстановление доступа",
                 sender=app.config.get("MAIL_USERNAME"),
                 recipients=[f'<{user.email}>', '<infseek@gmail.com>'],
-                body=f"Код восстановления действителен в течение 60 минут.\n\Имя пользователя: {user.username}\nEmail: {user.email}\nКод восстановления: {user.access_code}",
+                body=f"Код восстановления действителен в течение 60 минут.\nИмя пользователя: {user.username}\nEmail: {user.email}\nКод восстановления: {user.access_code}",
             )
 
         mail.send(msg)
