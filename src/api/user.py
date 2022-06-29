@@ -113,10 +113,7 @@ def register():
         if token:
             success, message = verify_recaptcha_token(token)
             if not success:
-                response = {
-                    'success': success,
-                    'message': message
-                }
+                response = {'success': success, 'message': message}
                 return jsonify(response), 403
 
         try:
@@ -139,9 +136,7 @@ def register():
 
         send_email_with_access_code(user)
 
-        @scheduler.task(
-            'interval', id=f'delete_user_{user.id}_from_db', minutes=15
-        )
+        @scheduler.task('interval', id=f'delete_user_{user.id}_from_db', minutes=15)
         def delete_user_from_db():
             db_user = User.query.get(user.id)
             if db_user and not db_user.is_activated:
@@ -173,12 +168,17 @@ def activate():
     if token:
         success, message = verify_recaptcha_token(token)
         if not success:
-            response = {
-                'success': success,
-                'message': message
-            }
+            response = {'success': success, 'message': message}
             return jsonify(response), 403
 
+    if not email or not email.strip():
+        response = {
+            'success': False,
+            'message': f"Email field must not be empty",
+        }
+        return jsonify(response), 400
+
+    email = email.strip().lower()
     user = User.query.filter_by(email=email).first()
 
     if user:
@@ -265,10 +265,7 @@ def generate_restoration_email():
     if token:
         success, message = verify_recaptcha_token(token)
         if not success:
-            response = {
-                'success': success,
-                'message': message
-            }
+            response = {'success': success, 'message': message}
             return jsonify(response), 403
 
     if not email or not email.strip():
@@ -341,10 +338,7 @@ def restore():
     if token:
         success, message = verify_recaptcha_token(token)
         if not success:
-            response = {
-                'success': success,
-                'message': message
-            }
+            response = {'success': success, 'message': message}
             return jsonify(response), 403
 
     if not email or not email.strip():
@@ -430,10 +424,7 @@ def login():
     if token:
         success, message = verify_recaptcha_token(token)
         if not success:
-            response = {
-                'success': success,
-                'message': message
-            }
+            response = {'success': success, 'message': message}
             return jsonify(response), 403
 
     if not username or not username.strip():
@@ -734,12 +725,14 @@ def verify_recaptcha_token(token):
     request = {'secret': secret, 'response': token}
 
     try:
-        recaptcha = requests.post('https://www.google.com/recaptcha/api/siteverify', data=request).json()
+        recaptcha = requests.post(
+            'https://www.google.com/recaptcha/api/siteverify', data=request
+        ).json()
 
         if not recaptcha or not recaptcha['score'] or recaptcha['score'] < 0.4:
             return False, f"ReCaptcha verification failed"
-        
+
         return True, f"ReCaptcha verification passed"
-        
+
     except:
         return False, "reCaptcha: something went wrong"
