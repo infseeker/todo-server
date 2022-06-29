@@ -178,8 +178,7 @@ def activate():
         }
         return jsonify(response), 400
 
-    email = email.strip().lower()
-    user = User.query.filter_by(email=email).first()
+    user = User.get_user_by_email(email)
 
     if user:
         if not user.is_activated:
