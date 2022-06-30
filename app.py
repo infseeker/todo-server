@@ -19,21 +19,17 @@ app.config.from_object(__name__)
 
 # Heroku connection
 s3 = S3Connection(
-    os.environ['DB_HOST'],
-    os.environ['DB_NAME'],
-    os.environ['DB_USER_NAME'],
-    os.environ['DB_USER_PASSWORD'],
+    os.environ['DATABASE_URL'],
+    os.environ['CLIENT_ORIGIN'],
+    os.environ['EMAIL_USER'],
+    os.environ['EMAIL_PASSWORD'],
+    os.environ['RECAPTCHA_SECRET_KEY'],
 )
 
 # data handling
 app.config[
     'SQLALCHEMY_DATABASE_URI'
-] = 'postgresql://{db_user_name}:{db_user_password}@{db_host}/{db_name}'.format(
-    db_user_name=os.environ['DB_USER_NAME'],
-    db_user_password=os.environ['DB_USER_PASSWORD'],
-    db_host=os.environ['DB_HOST'],
-    db_name=os.environ['DB_NAME'],
-)
+] = os.environ['DATABASE_URL']
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_SORT_KEYS'] = False
