@@ -28,9 +28,7 @@ s3 = S3Connection(
 )
 
 # data handling
-app.config[
-    'SQLALCHEMY_DATABASE_URI'
-] = os.environ['DATABASE_URL']
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL'].replace("postgres://", "postgresql://", 1)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_SORT_KEYS'] = False
