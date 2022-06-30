@@ -1,5 +1,6 @@
 import os
 from sched import scheduler
+from boto.s3.connection import S3Connection
 
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -16,6 +17,13 @@ DEBUG = True
 app = Flask(__name__)
 app.config.from_object(__name__)
 
+# Heroku connection
+s3 = S3Connection(
+    os.environ['DB_HOST'],
+    os.environ['DB_NAME'],
+    os.environ['DB_USER_NAME'],
+    os.environ['DB_USER_PASSWORD'],
+)
 
 # data handling
 app.config[
