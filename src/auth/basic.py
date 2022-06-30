@@ -1,6 +1,3 @@
-# Auth: Flask-login (Basic)
-# OAuth: Google, Yandex, VK, Apple
-
 import os
 from flask import jsonify
 
@@ -36,7 +33,7 @@ cors = CORS(
     app,
     resources={
         r'*': {
-            'origins': "['http://192.168.0.2:3000', 'http://127.0.0.1:3000', 'http://dev.localhost:3000', 'http://localhost:3000', https://infseeker-todo.herokuapp.com/]"
+            'origins': "['http://192.168.0.2:3000', 'http://127.0.0.1:3000', 'http://dev.localhost:3000', 'http://localhost:3000']"
         }
     },
     expose_headers=['Content-Type', 'X-CSRFToken'],
