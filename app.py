@@ -20,6 +20,7 @@ app.config.from_object(__name__)
 # Heroku connection
 s3 = S3Connection(
     os.environ['DATABASE_URL'],
+    os.environ['SECRET_KEY'],
     os.environ['CLIENT_ORIGIN'],
     os.environ['EMAIL_USER'],
     os.environ['EMAIL_PASSWORD'],
