@@ -40,7 +40,7 @@ migrate = Migrate(app, db)
 
 # mail config
 mail_settings = {
-    'MAIL_SERVER': 'smtp.mail.ru',
+    'MAIL_SERVER': os.environ['EMAIL_SERVER'],
     'MAIL_PORT': 465,
     'MAIL_USE_TLS': False,
     'MAIL_USE_SSL': True,
@@ -74,6 +74,7 @@ def index():
         'message': "ToDo Project Index URL",
         'path': '/',
         'data': {'action': 'index'},
+        'code': 200,
     }
     return jsonify(response), 200
 
@@ -85,6 +86,7 @@ def api():
         'message': "ToDo Project API",
         'path': '/todo/api',
         'data': {'action': 'api'},
+        'code': 200,
     }
     return jsonify(response), 200
 

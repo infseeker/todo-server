@@ -33,7 +33,12 @@ cors = CORS(
     app,
     resources={
         r'*': {
-            'origins': "['http://192.168.0.2:3000', 'http://127.0.0.1:3000', 'http://dev.localhost:3000', 'http://localhost:3000']"
+            'origins': [
+                'http://192.168.0.2:3000',
+                'http://127.0.0.1:3000',
+                'http://dev.localhost:3000',
+                'http://localhost:3000',
+            ]
         }
     },
     expose_headers=['Content-Type', 'X-CSRFToken'],
@@ -48,19 +53,19 @@ login_manager.session_protection = 'strong'
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    response = {'success': False, 'message': 'You are not authenticated'}
+    response = {'success': False, 'message': 'You are not authenticated', 'code': 401}
     return jsonify(response), 401
 
 
 @app.errorhandler(403)
 def forbidden(e):
-    response = {'success': False, 'message': 'You do not have permissions'}
+    response = {'success': False, 'message': 'You do not have permissions', 'code': 403}
     return jsonify(response), 403
 
 
 @app.errorhandler(400)
 def forbidden(e):
-    response = {'success': False, 'message': e.description}
+    response = {'success': False, 'message': e.description, 'code': 400}
     return jsonify(response), 400
 
 
