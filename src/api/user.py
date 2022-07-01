@@ -500,14 +500,14 @@ def login():
                     'message': f"Your account was deleted",
                     'deleted': True,
                     'email': user.email,
-                    'code': 204,
+                    'code': 403,
                 }
-                return jsonify(response), 204
+                return jsonify(response), 403
         else:
             response = {
                 'success': False,
                 'message': f"Your account is not activated",
-                'non_activated': True,
+                'inactive': True,
                 'email': user.email,
                 'code': 403,
             }
@@ -637,9 +637,9 @@ def delete():
             response = {
                 'success': False,
                 'message': f"User {user.email} was already deleted before",
-                'code': 204,
+                'code': 403,
             }
-            return jsonify(response), 204
+            return jsonify(response), 403
 
     response = {'success': False, 'message': f"Invalid password", 'code': 400}
 
@@ -719,8 +719,8 @@ def is_deleted_from_db():
         }
         return jsonify(response), 400
 
-    response = {'success': True, 'message': f"User with email {email} not found'", 'code': 204}
-    return jsonify(response), 204
+    response = {'success': True, 'message': f"User with email {email} not found'", 'code': 200}
+    return jsonify(response), 200
 
 
 @app.route('/todo/api/user/all', methods=['GET'])
