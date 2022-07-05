@@ -1,6 +1,5 @@
 import os
 from sched import scheduler
-from boto.s3.connection import S3Connection
 
 from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
@@ -10,22 +9,10 @@ from flask_mail import Mail
 from flask_apscheduler import APScheduler
 
 
-# configuration
-DEBUG = True
-
 # instantiate the app
 app = Flask(__name__)
 app.config.from_object(__name__)
 
-# Heroku connection
-s3 = S3Connection(
-    os.environ['DATABASE_URL'],
-    os.environ['SECRET_KEY'],
-    os.environ['EMAIL_SERVER'],
-    os.environ['EMAIL_USER'],
-    os.environ['EMAIL_PASSWORD'],
-    os.environ['RECAPTCHA_SECRET_KEY'],
-)
 
 # data handling
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL'].replace("postgres://", "postgresql://", 1)
@@ -93,11 +80,9 @@ def api():
 
 # run app
 if __name__ == '__main__':
-    app.run()
+    app.run(debug=True, host='0.0.0.0')
 
 
-# source env/bin/activate
+# . env/bin/activate
 # export FLASK_ENV=development
 # flask run --host=0.0.0.0 --port=8080
-
-# ngrok start frontend backend
