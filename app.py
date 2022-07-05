@@ -1,4 +1,5 @@
 import os
+from dotenv import load_dotenv
 from sched import scheduler
 
 from flask import Flask, jsonify
@@ -12,6 +13,11 @@ from flask_apscheduler import APScheduler
 # instantiate the app
 app = Flask(__name__)
 app.config.from_object(__name__)
+
+for env_file in ('.env', '.flaskenv'):
+    env = os.path.join(os.getcwd(), env_file)
+    if os.path.exists(env):
+        load_dotenv(env)
 
 
 # data handling
