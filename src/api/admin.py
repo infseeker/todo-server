@@ -35,9 +35,9 @@ def get_users():
 @admin.require(403)
 def create_user():
     if (
-        check_username()[0].json['success']
-        and check_email()[0].json['success']
-        and check_password()[0].json['success']
+        check_username()[0].json['code'] == 200
+        and check_email()[0].json['code'] == 200
+        and check_password()[0].json['code'] == 200
     ):
         data = request.json
 
@@ -76,11 +76,11 @@ def create_user():
         }
         return jsonify(response), 200
     else:
-        if not check_username()[0].json['success']:
+        if not check_username()[0].json['code'] == 200:
             return check_username()
-        elif not check_email()[0].json['success']:
+        elif not check_email()[0].json['code'] == 200:
             return check_email()
-        elif not check_password()[0].json['success']:
+        elif not check_password()[0].json['code'] == 200:
             return check_password()
 
 
@@ -122,10 +122,10 @@ def update_user(user_id):
     username = data.get('username') or user.username
     email = data.get('email') or user.email
 
-    if not user.username == username.strip() and not check_username()[0].json['success']:
+    if not user.username == username.strip() and not check_username()[0].json['code'] == 200:
         return check_username()
 
-    if not user.email == email.strip() and not check_email()[0].json['success']:
+    if not user.email == email.strip() and not check_email()[0].json['code'] == 200:
         return check_email()
 
     try:
