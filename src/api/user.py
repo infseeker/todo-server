@@ -13,7 +13,7 @@ from ..auth.basic import *
 @app.route('/todo/api/user/csrf', methods=['GET'])
 def get_csrf():
     token = generate_csrf()
-    response = jsonify({'message': f"CSRF cookie set", 'token': token, 'code': 200})
+    response = jsonify({'message': f"CSRF cookie set", 'code': 200})
     response.headers.set('X-CSRFToken', token)
     return response, 200
 
