@@ -21,7 +21,7 @@ app.config.update(
     SECRET_KEY=os.environ['SECRET_KEY'],
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
-    SESSION_COOKIE_SECURE=os.environ['SESSION_COOKIE_SECURE']
+    SESSION_COOKIE_SECURE=eval(os.environ['SESSION_COOKIE_SECURE'])
 )
 
 # CSRF Protection
@@ -52,25 +52,25 @@ login_manager.session_protection = 'strong'
 app.config.update(
     REMEMBER_COOKIE_HTTPONLY=True,
     REMEMBER_COOKIE_SAMESITE='Lax',
-    REMEMBER_COOKIE_SECURE=os.environ['SESSION_COOKIE_SECURE']
+    REMEMBER_COOKIE_SECURE=eval(os.environ['SESSION_COOKIE_SECURE'])
 )
 
 
 @login_manager.unauthorized_handler
 def unauthorized():
-    response = {'success': False, 'message': 'You are not authenticated', 'code': 401}
+    response = {'message': 'You are not authenticated', 'code': 401}
     return jsonify(response), 401
 
 
 @app.errorhandler(403)
 def forbidden(e):
-    response = {'success': False, 'message': 'You do not have permissions', 'code': 403}
+    response = {'message': 'You do not have permissions', 'code': 403}
     return jsonify(response), 403
 
 
 @app.errorhandler(400)
 def forbidden(e):
-    response = {'success': False, 'message': e.description, 'code': 400}
+    response = {'message': e.description, 'code': 400}
     return jsonify(response), 400
 
 

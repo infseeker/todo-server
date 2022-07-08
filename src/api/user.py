@@ -13,9 +13,7 @@ from ..auth.basic import *
 @app.route('/todo/api/user/csrf', methods=['GET'])
 def get_csrf():
     token = generate_csrf()
-    response = jsonify(
-        {'success': True, 'message': f"CSRF cookie set", 'token': token, 'code': 200}
-    )
+    response = jsonify({'message': f"CSRF cookie set", 'token': token, 'code': 200})
     response.headers.set('X-CSRFToken', token)
     return response, 200
 
@@ -26,7 +24,6 @@ def check_username():
 
     if not data.get('username'):
         response = {
-            'success': False,
             'message': "JSON: Username field not found or empty",
             'code': 400,
         }
@@ -39,7 +36,6 @@ def check_username():
 
         if not pattern.match(username):
             response = {
-                'success': False,
                 'message': f"Username {username} contents wrong characters (a-z, A-Z) / too short (3 min) / too long (15 max)",
                 'code': 400,
             }
@@ -51,13 +47,12 @@ def check_username():
 
             if user:
                 response = {
-                    'success': False,
                     'message': f"Username {username} is already in use",
                     'code': 409,
                 }
                 return jsonify(response), 409
 
-    response = {'success': True, 'message': f"Username {username} is free", 'code': 200}
+    response = {'message': f"Username {username} is free", 'code': 200}
     return jsonify(response), 200
 
 
@@ -67,7 +62,6 @@ def check_email():
 
     if not data.get('email'):
         response = {
-            'success': False,
             'message': "JSON: email field not found or empty",
             'code': 400,
         }
@@ -80,7 +74,6 @@ def check_email():
 
         if not pattern.match(email):
             response = {
-                'success': False,
                 'message': f"Email {email} has an invalid format",
                 'code': 400,
             }
@@ -90,13 +83,12 @@ def check_email():
 
             if user:
                 response = {
-                    'success': False,
                     'message': f"Email {email} is already in use",
                     'code': 409,
                 }
                 return jsonify(response), 409
 
-    response = {'success': True, 'message': f"Email {email} is free", 'code': 200}
+    response = {'message': f"Email {email} is free", 'code': 200}
     return jsonify(response), 200
 
 
@@ -105,7 +97,6 @@ def check_password():
     data = request.json
     if not data.get('password'):
         response = {
-            'success': False,
             'message': "JSON: Password field not found or empty",
             'code': 400,
         }
@@ -117,19 +108,19 @@ def check_password():
         pattern = re.compile('^(?=.*[A-Za-z])(?=.*\d)[A-Za-z\d@\-$!%*#?&]{8,15}$')
 
         if not pattern.match(password):
-            response = {'success': False, 'message': f"Password has an invalid format", 'code': 400}
+            response = {'message': f"Password has an invalid format", 'code': 400}
             return jsonify(response), 400
 
-    response = {'success': True, 'message': f"Password format is valid", 'code': 200}
+    response = {'message': f"Password format is valid", 'code': 200}
     return jsonify(response), 200
 
 
 @app.route('/todo/api/user/register', methods=['POST'])
 def register():
     if (
-        check_username()[0].json['success']
-        and check_email()[0].json['success']
-        and check_password()[0].json['success']
+        check_username()[0].json['code'] == 200
+        and check_email()[0].json['code'] == 200
+        and check_password()[0].json['code'] == 200
     ):
         data = request.json
         token = data.get('token')
@@ -137,14 +128,13 @@ def register():
         if token:
             success, message = verify_recaptcha_token(token)
             if not success:
-                response = {'success': success, 'message': message, 'code': 403}
+                response = {'message': message, 'code': 403}
                 return jsonify(response), 403
 
         try:
             user = user_schema.load(data, session=db.session)
         except (ValidationError, TypeError):
             response = {
-                'success': False,
                 'message': f"User creation validation error, check your data",
                 'code': 400,
             }
@@ -153,7 +143,7 @@ def register():
         success, message = user.create()
 
         if not success:
-            response = {'success': False, 'message': message, 'code': 400}
+            response = {'message': message, 'code': 400}
             return jsonify(response), 400
 
         send_email_with_access_code(user)
@@ -166,17 +156,16 @@ def register():
             scheduler.remove_job(f'delete_user_{user.id}_from_db')
 
         response = {
-            'success': True,
             'message': f"Email has been sent to {user.email}",
             'code': 200,
         }
         return jsonify(response), 200
     else:
-        if not check_username()[0].json['success']:
+        if not check_username()[0].json['code'] == 200:
             return check_username()
-        elif not check_email()[0].json['success']:
+        elif not check_email()[0].json['code'] == 200:
             return check_email()
-        elif not check_password()[0].json['success']:
+        elif not check_password()[0].json['code'] == 200:
             return check_password()
 
 
@@ -191,12 +180,11 @@ def activate():
     if token:
         success, message = verify_recaptcha_token(token)
         if not success:
-            response = {'success': success, 'message': message, 'code': 403}
+            response = {'message': message, 'code': 403}
             return jsonify(response), 403
 
     if not email or not email.strip():
         response = {
-            'success': False,
             'message': f"Email field must not be empty",
             'code': 400,
         }
@@ -215,38 +203,33 @@ def activate():
 
                     if success:
                         response = {
-                            'success': True,
                             'message': f"User with email {email} has been activated",
                             'code': 200,
                         }
                         return jsonify(response), 200
                     else:
-                        response = {'success': False, 'message': message, 'code': 400}
+                        response = {'message': message, 'code': 400}
                         return jsonify(response), 400
                 else:
                     response = {
-                        'success': False,
                         'message': f"Entered code is incorrect or expired",
                         'code': 400,
                     }
                     return jsonify(response), 400
             else:
                 response = {
-                    'success': False,
                     'message': f"Invalid activation code format",
                     'code': 400,
                 }
                 return jsonify(response), 400
         else:
             response = {
-                'success': False,
                 'message': f"User with email {email} already activated",
                 'code': 409,
             }
         return jsonify(response), 409
     else:
         response = {
-            'success': False,
             'message': f"User with email {email} was not found",
             'code': 404,
         }
@@ -261,7 +244,6 @@ def is_activated():
     if user:
         if user.is_activated:
             response = {
-                'success': True,
                 'message': f"User with email {user.email} is activated",
                 'access_code': user.access_code,
                 'code': 200,
@@ -269,14 +251,13 @@ def is_activated():
             return jsonify(response), 200
         else:
             response = {
-                'success': False,
                 'message': f"User with email {user.email} is NOT activated",
                 'access_code': user.access_code,
                 'code': 403,
             }
             return jsonify(response), 403
 
-    response = {'success': False, 'message': f"User with email {email} is not found'", 'code': 404}
+    response = {'message': f"User with email {email} is not found'", 'code': 404}
     return jsonify(response), 404
 
 
@@ -289,12 +270,11 @@ def generate_restoration_email():
     if token:
         success, message = verify_recaptcha_token(token)
         if not success:
-            response = {'success': success, 'message': message}
+            response = {'message': message}
             return jsonify(response), 403
 
     if not email or not email.strip():
         response = {
-            'success': False,
             'message': f"Email field must not be empty",
             'code': 400,
         }
@@ -305,7 +285,6 @@ def generate_restoration_email():
 
     if not user:
         response = {
-            'success': False,
             'message': f"User with {email.lower()} was not found",
             'code': 404,
         }
@@ -313,7 +292,6 @@ def generate_restoration_email():
 
     if not user.is_activated:
         response = {
-            'success': False,
             'message': f"User with {email.lower()} is not activated",
             'code': 403,
         }
@@ -325,7 +303,6 @@ def generate_restoration_email():
 
     if not success:
         response = {
-            'success': False,
             'message': message,
             'code': 400,
         }
@@ -348,7 +325,6 @@ def generate_restoration_email():
         scheduler.remove_job(f'delete_access_code_for_{user.id}_from_db')
 
     response = {
-        'success': True,
         'message': f"Restoration code was sent to {user.email}",
         'code': 200,
     }
@@ -367,24 +343,22 @@ def restore():
     if token:
         success, message = verify_recaptcha_token(token)
         if not success:
-            response = {'success': success, 'message': message, 'code': 403}
+            response = {'message': message, 'code': 403}
             return jsonify(response), 403
 
     if not email or not email.strip():
         response = {
-            'success': False,
             'message': f"Email field must not be empty",
             'code': 400,
         }
         return jsonify(response), 400
 
     if not password:
-        response = {'success': False, 'message': f"Password field must not be empty", 'code': 400}
+        response = {'message': f"Password field must not be empty", 'code': 400}
         return jsonify(response), 400
 
     if not access_code or not access_code.strip():
         response = {
-            'success': False,
             'message': f"Access code field must not be empty",
             'code': 400,
         }
@@ -394,7 +368,7 @@ def restore():
 
     if user:
         if user.is_activated:
-            if not check_password()[0].json['success']:
+            if not check_password()[0].json['code'] == 200:
                 return check_password()
 
             if access_code and pattern.match(str(access_code)):
@@ -406,33 +380,30 @@ def restore():
                     success, message = user.update()
                     if success:
                         response = {
-                            'success': True,
                             'message': f"Your account was restored",
                             'code': 200,
                         }
                         return jsonify(response), 200
                     else:
-                        response = {'success': False, 'message': message, 'code': 400}
+                        response = {'message': message, 'code': 400}
                         return jsonify(response), 400
                 else:
                     response = {
-                        'success': False,
                         'message': f"Entered code is incorrect",
                         'code': 400,
                     }
                     return jsonify(response), 400
             else:
                 response = {
-                    'success': False,
                     'message': f"Activation code format is invalid",
                     'code': 400,
                 }
                 return jsonify(response), 400
         else:
-            response = {'success': False, 'message': f"User {email} is not activated", 'code': 403}
+            response = {'message': f"User {email} is not activated", 'code': 403}
         return jsonify(response), 403
     else:
-        response = {'success': False, 'message': f"User with email {email} not found", 'code': 404}
+        response = {'message': f"User with email {email} not found", 'code': 404}
         return jsonify(response), 404
 
 
@@ -446,15 +417,15 @@ def login():
     if token:
         success, message = verify_recaptcha_token(token)
         if not success:
-            response = {'success': success, 'message': message, 'code': 403}
+            response = {'message': message, 'code': 403}
             return jsonify(response), 403
 
     if not username or not username.strip():
-        response = {'success': False, 'message': f"Username field must not be empty", 'code': 400}
+        response = {'message': f"Username field must not be empty", 'code': 400}
         return jsonify(response), 400
 
     if not password:
-        response = {'success': False, 'message': f"Password field must not be empty", 'code': 400}
+        response = {'message': f"Password field must not be empty", 'code': 400}
         return jsonify(response), 400
 
     username = username.strip()
@@ -473,30 +444,18 @@ def login():
                 success, message = user.login()
 
                 if success:
-                    if not user.is_admin:
-                        response = {
-                            'success': True,
-                            'message': f"You are logged in",
-                            'login': True,
-                            'email': user.email,
-                            'code': 200,
-                        }
-                    else:
-                        response = {
-                            'success': True,
-                            'message': f"You are logged in",
-                            'login': True,
-                            'admin': True,
-                            'email': user.email,
-                            'code': 200,
-                        }
+                    response = {
+                        'message': f"You are logged in",
+                        'email': user.email,
+                        'admin': user.is_admin,
+                        'code': 200,
+                    }
                     return jsonify(response), 200
                 else:
-                    response = {'success': True, 'message': message, 'code': 400}
+                    response = {'message': message, 'code': 400}
                     return jsonify(response), 400
             else:
                 response = {
-                    'success': False,
                     'message': f"Your account was deleted",
                     'deleted': True,
                     'email': user.email,
@@ -505,7 +464,6 @@ def login():
                 return jsonify(response), 403
         else:
             response = {
-                'success': False,
                 'message': f"Your account is not activated",
                 'inactive': True,
                 'email': user.email,
@@ -514,7 +472,6 @@ def login():
             return jsonify(response), 403
 
     response = {
-        'success': False,
         'message': f"Invalid username or password",
         'code': 400,
     }
@@ -525,7 +482,6 @@ def login():
 def check_session():
     if not current_user.is_authenticated:
         response = {
-            'success': False,
             'message': f"You are not authenticated",
             'login': False,
             'code': 401,
@@ -534,7 +490,6 @@ def check_session():
 
     if not current_user.is_admin:
         response = {
-            'success': True,
             'message': f"You are logged in",
             'login': True,
             'email': current_user.email,
@@ -543,7 +498,6 @@ def check_session():
         return jsonify(response), 200
 
     response = {
-        'success': True,
         'message': f"You are logged in",
         'login': True,
         'admin': True,
@@ -557,7 +511,6 @@ def check_session():
 @login_required
 def get_user_data():
     response = {
-        'success': True,
         'message': f"You are logged in",
         'data': user_schema.dump(current_user),
         'code': 200,
@@ -573,7 +526,7 @@ def update():
 
     password = data.get('password')
     if password:
-        if not check_password()[0].json['success']:
+        if not check_password()[0].json['code'] == 200:
             return check_password()
 
         user.password_hash = generate_password_hash(password)
@@ -581,11 +534,10 @@ def update():
     success, message = user.update()
 
     if not success:
-        response = {'success': True, 'message': message, 'code': 400}
+        response = {'message': message, 'code': 400}
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"Current user has been updated",
         'data': user_schema.dump(user),
         'code': 200,
@@ -597,7 +549,7 @@ def update():
 @login_required
 def logout():
     logout_user()
-    response = {'success': True, 'message': f"You are logged out", 'code': 200}
+    response = {'message': f"You are logged out", 'code': 200}
     return jsonify(response), 200
 
 
@@ -610,7 +562,6 @@ def delete():
 
     if not password:
         response = {
-            'success': False,
             'message': f"Password field must not be empty",
             'code': 400,
         }
@@ -625,23 +576,21 @@ def delete():
 
             if success:
                 response = {
-                    'success': True,
                     'message': f"User {user.email} was deleted",
                     'code': 200,
                 }
                 return jsonify(response), 200
             else:
-                response = {'success': True, 'message': message, 'code': 400}
+                response = {'message': message, 'code': 400}
                 return jsonify(response), 400
         else:
             response = {
-                'success': False,
                 'message': f"User {user.email} was already deleted before",
                 'code': 403,
             }
             return jsonify(response), 403
 
-    response = {'success': False, 'message': f"Invalid password", 'code': 400}
+    response = {'message': f"Invalid password", 'code': 400}
 
     return jsonify(response), 400
 
@@ -653,18 +602,16 @@ def is_deleted():
 
     if user:
         if user.is_deleted:
-            response = {'success': True, 'message': f"user {user.email} is deleted", 'code': 200}
+            response = {'message': f"user {user.email} is deleted", 'code': 200}
             return jsonify(response), 200
         else:
             response = {
-                'success': False,
                 'message': f"user {user.email} is NOT deleted",
                 'code': 400,
             }
             return jsonify(response), 400
 
     response = {
-        'success': False,
         'message': f"User {email.strip()} not found",
         'code': 404,
     }
@@ -684,21 +631,18 @@ def delete_from_db():
         success, message = user.delete()
         if success:
             response = {
-                'success': True,
                 'message': f"User {user.email} was deleted from DB",
                 'code': 200,
             }
             return jsonify(response), 200
         else:
             response = {
-                'success': True,
                 'message': message,
                 'code': 400,
             }
             return jsonify(response), 400
 
     response = {
-        'success': False,
         'message': f"Invalid email or password",
         'code': 400,
     }
@@ -713,13 +657,12 @@ def is_deleted_from_db():
 
     if user:
         response = {
-            'success': False,
             'message': f"User {user.email} is NOT deleted from DB",
             'code': 400,
         }
         return jsonify(response), 400
 
-    response = {'success': True, 'message': f"User with email {email} not found'", 'code': 200}
+    response = {'message': f"User with email {email} not found'", 'code': 200}
     return jsonify(response), 200
 
 
@@ -727,7 +670,6 @@ def is_deleted_from_db():
 def get_all_users():
     users = User.query.all()
     response = {
-        'success': True,
         'message': "All users",
         'data': users_schema.dump(users),
         'code': 200,

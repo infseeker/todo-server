@@ -18,7 +18,6 @@ from ..auth.basic import *
 def get_lists():
     lists = List.query.filter_by(user_id=current_user.id).order_by('id')
     response = {
-        'success': True,
         'message': f"Lists of current user",
         'user_id': current_user.id,
         'data': lists_schema.dump(lists),
@@ -36,7 +35,6 @@ def create_list():
         list = list_schema.load(data, session=db.session)
     except (ValidationError, TypeError):
         response = {
-            'success': False,
             'message': f"List creation validation error, check your data",
             'code': 400,
         }
@@ -46,7 +44,6 @@ def create_list():
 
     if not list.title or not list.title.strip():
         response = {
-            'success': False,
             'message': f"List title must not be empty",
             'code': 400,
         }
@@ -58,14 +55,12 @@ def create_list():
 
     if not success:
         response = {
-            'success': False,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List has been created",
         'data': list_schema.dump(list),
         'code': 200,
@@ -81,7 +76,6 @@ def update_list(list_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List not found",
             'code': 404,
         }
@@ -91,7 +85,6 @@ def update_list(list_id):
         list = list_schema.load(data, instance=list, session=db.session)
     except (ValidationError, TypeError):
         response = {
-            'success': False,
             'message': f"List updating validation error, check your data",
             'code': 400,
         }
@@ -99,7 +92,6 @@ def update_list(list_id):
 
     if not list.title or not list.title.strip():
         response = {
-            'success': False,
             'message': f"List title must not be empty",
             'code': 400,
         }
@@ -111,14 +103,12 @@ def update_list(list_id):
 
     if not success:
         response = {
-            'success': True,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List #{list.id} has been updated",
         'data': list_schema.dump(list),
         'code': 200,
@@ -133,7 +123,6 @@ def delete_list(list_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List not found",
             'code': 404,
         }
@@ -143,14 +132,12 @@ def delete_list(list_id):
 
     if not success:
         response = {
-            'success': True,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List #{list.id} has been deleted",
         'data': list_schema.dump(list),
         'code': 200,
@@ -165,7 +152,6 @@ def get_list(list_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List not found",
             'code': 404,
         }
@@ -174,7 +160,6 @@ def get_list(list_id):
     list_items = ListItem.query.filter(ListItem.list_id == list_id)
 
     response = {
-        'success': True,
         'message': f"List items for list #{list.id}",
         'user_id': current_user.id,
         'list_id': list.id,
@@ -192,7 +177,6 @@ def create_list_item(list_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List not found",
             'code': 404,
         }
@@ -202,7 +186,6 @@ def create_list_item(list_id):
         list_item = list_item_schema.load(data, session=db.session)
     except (ValidationError, TypeError):
         response = {
-            'success': False,
             'message': f"List item creation validation error, check your data",
             'code': 400,
         }
@@ -212,7 +195,6 @@ def create_list_item(list_id):
 
     if not list_item.title or not list_item.title.strip():
         response = {
-            'success': False,
             'message': f"List item title must not be empty",
             'code': 400,
         }
@@ -223,14 +205,12 @@ def create_list_item(list_id):
     success, message = list_item.create()
     if not success:
         response = {
-            'success': False,
             'message': message,
             'code': 200,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List item created for #{list.id}",
         'data': list_item_schema.dump(list_item),
         'code': 200,
@@ -249,7 +229,6 @@ def update_list_item(list_id, list_item_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List not found",
             'code': 404,
         }
@@ -257,7 +236,6 @@ def update_list_item(list_id, list_item_id):
 
     if not list_item:
         response = {
-            'success': False,
             'message': f"List item not found",
             'code': 404,
         }
@@ -267,7 +245,6 @@ def update_list_item(list_id, list_item_id):
         list = list_item_schema.load(data, instance=list_item, session=db.session)
     except (ValidationError, TypeError):
         response = {
-            'success': False,
             'message': f"List updating validation error, check your data",
             'code': 400,
         }
@@ -275,7 +252,6 @@ def update_list_item(list_id, list_item_id):
 
     if not list_item.title or not list_item.title.strip():
         response = {
-            'success': False,
             'message': f"List item title must not be empty",
             'code': 400,
         }
@@ -287,14 +263,12 @@ def update_list_item(list_id, list_item_id):
 
     if not success:
         response = {
-            'success': True,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List item #{list_item.id} of list #{list.id} has been updated",
         'data': list_item_schema.dump(list),
         'code': 200,
@@ -312,7 +286,6 @@ def delete_list_item(list_id, list_item_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List not found",
             'code': 404,
         }
@@ -320,7 +293,6 @@ def delete_list_item(list_id, list_item_id):
 
     if not list_item:
         response = {
-            'success': False,
             'message': f"List item not found",
             'code': 404,
         }
@@ -330,14 +302,12 @@ def delete_list_item(list_id, list_item_id):
 
     if not success:
         response = {
-            'success': True,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List item #{list_item.id} of list #{list.id} has been deleted",
         'data': list_item_schema.dump(list_item),
         'code': 200,

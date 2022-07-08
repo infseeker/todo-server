@@ -17,14 +17,12 @@ def get_users():
 
     if not users:
         response = {
-            'success': False,
             'message': "No users found",
             'code': 404,
         }
         return jsonify(response), 404
 
     response = {
-        'success': True,
         'message': "All users",
         'data': AdminUserSchema(many=True).dump(users),
         'code': 200,
@@ -47,7 +45,6 @@ def create_user():
             user = AdminUserSchema().load(data, session=db.session)
         except (ValidationError, TypeError):
             response = {
-                'success': False,
                 'message': f"User creation validation error, check your data",
                 'code': 400,
             }
@@ -57,7 +54,6 @@ def create_user():
 
         if not success:
             response = {
-                'success': False,
                 'message': message,
                 'code': 400,
             }
@@ -68,14 +64,12 @@ def create_user():
         success, message = user.update()
         if not success:
             response = {
-                'success': False,
                 'message': message,
                 'code': 400,
             }
             return jsonify(response), 400
 
         response = {
-            'success': True,
             'message': f"User #{user.id} has been created",
             'data': AdminUserSchema().dump(user),
             'code': 200,
@@ -98,14 +92,12 @@ def get_user(user_id):
 
     if not user:
         response = {
-            'success': False,
             'message': f"User #{user_id} not found",
             'code': 404,
         }
         return jsonify(response), 404
 
     response = {
-        'success': True,
         'message': f"User #{user.id}",
         'data': AdminUserSchema().dump(user),
         'code': 200,
@@ -122,7 +114,6 @@ def update_user(user_id):
 
     if not user:
         response = {
-            'success': False,
             'message': f"User #{user_id} not found",
             'code': 404,
         }
@@ -143,7 +134,6 @@ def update_user(user_id):
         )
     except (ValidationError, TypeError):
         response = {
-            'success': False,
             'message': f"User updating validation error, check your data",
             'code': 400,
         }
@@ -154,7 +144,6 @@ def update_user(user_id):
 
     if user.id == current_user.id and not user.is_admin:
         response = {
-            'success': False,
             'message': "You can't remove your own admin permissions",
             'code': 403,
         }
@@ -164,14 +153,12 @@ def update_user(user_id):
 
     if not success:
         response = {
-            'success': True,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"User #{user.id} has been updated",
         'data': AdminUserSchema().dump(user),
         'code': 200,
@@ -187,7 +174,6 @@ def delete_user(user_id):
 
     if not user:
         response = {
-            'success': False,
             'message': f"User #{user_id} not found",
             'code': 404,
         }
@@ -195,7 +181,6 @@ def delete_user(user_id):
 
     if user.id == current_user.id:
         response = {
-            'success': False,
             'message': f"You can't delete yourself",
             'code': 403,
         }
@@ -205,14 +190,12 @@ def delete_user(user_id):
 
     if not success:
         response = {
-            'success': False,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"User #{user.id} has been deleted",
         'code': 200,
     }
@@ -227,7 +210,6 @@ def get_user_lists(user_id):
 
     if not user:
         response = {
-            'success': False,
             'message': f"User #{user_id} not found",
             'code': 404,
         }
@@ -235,7 +217,6 @@ def get_user_lists(user_id):
 
     lists = List.query.filter_by(user_id=user.id).order_by('id')
     response = {
-        'success': True,
         'message': f"Lists of user #{user.id}",
         'user_id': user.id,
         'data': AdminListSchema(many=True).dump(lists),
@@ -253,7 +234,6 @@ def create_user_list(user_id):
 
     if not user:
         response = {
-            'success': False,
             'message': f"User #{user_id} not found",
             'code': 404,
         }
@@ -263,7 +243,6 @@ def create_user_list(user_id):
         list = AdminListSchema().load(data, session=db.session)
     except (ValidationError, TypeError):
         response = {
-            'success': False,
             'message': f"List creation validation error, check your data",
             'code': 400,
         }
@@ -273,7 +252,6 @@ def create_user_list(user_id):
 
     if not list.title or not list.title.strip():
         response = {
-            'success': False,
             'message': f"List title must not be empty",
             'code': 400,
         }
@@ -285,14 +263,12 @@ def create_user_list(user_id):
 
     if not success:
         response = {
-            'success': False,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List #{list.id} for user #{user.id} has been created",
         'data': AdminListSchema().dump(list),
         'code': 200,
@@ -309,7 +285,6 @@ def update_user_list(user_id, list_id):
 
     if not user:
         response = {
-            'success': False,
             'message': f"User #{user_id} not found",
             'code': 404,
         }
@@ -319,7 +294,6 @@ def update_user_list(user_id, list_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List #{list_id} for user #{user_id} not found",
             'code': 404,
         }
@@ -329,7 +303,6 @@ def update_user_list(user_id, list_id):
         list = AdminListSchema().load(data, instance=list, session=db.session)
     except (ValidationError, TypeError):
         response = {
-            'success': False,
             'message': f"List updating validation error, check your data",
             'code': 400,
         }
@@ -337,7 +310,6 @@ def update_user_list(user_id, list_id):
 
     if not list.title or not list.title.strip():
         response = {
-            'success': False,
             'message': f"List title must not be empty",
             'code': 400,
         }
@@ -349,14 +321,12 @@ def update_user_list(user_id, list_id):
 
     if not success:
         response = {
-            'success': False,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List #{list.id} for user #{user.id} has been updated",
         'data': AdminListSchema().dump(list),
         'code': 200,
@@ -372,7 +342,6 @@ def delete_user_list(user_id, list_id):
 
     if not user:
         response = {
-            'success': False,
             'message': f"User #{user_id} not found",
             'code': 404,
         }
@@ -382,7 +351,6 @@ def delete_user_list(user_id, list_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List #{list_id} for user #{user_id} not found",
             'code': 404,
         }
@@ -392,14 +360,12 @@ def delete_user_list(user_id, list_id):
 
     if not success:
         response = {
-            'success': True,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List #{list.id} has been deleted",
         'data': AdminListSchema().dump(list),
         'code': 200,
@@ -415,7 +381,6 @@ def get_user_list(user_id, list_id):
 
     if not user:
         response = {
-            'success': False,
             'message': f"User #{user_id} not found",
             'code': 404,
         }
@@ -425,7 +390,6 @@ def get_user_list(user_id, list_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List #{list_id} for user #{user_id} not found",
             'code': 404,
         }
@@ -434,7 +398,6 @@ def get_user_list(user_id, list_id):
     list_items = ListItem.query.filter(ListItem.list_id == list.id)
 
     response = {
-        'success': True,
         'message': f"List items for list #{list.id}",
         'user_id': user.id,
         'list_id': list.id,
@@ -453,7 +416,6 @@ def create_user_list_item(user_id, list_id):
 
     if not user:
         response = {
-            'success': False,
             'message': f"User #{user_id} not found",
             'code': 404,
         }
@@ -463,7 +425,6 @@ def create_user_list_item(user_id, list_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List #{list_id} for user #{user_id} not found",
             'code': 404,
         }
@@ -473,7 +434,6 @@ def create_user_list_item(user_id, list_id):
         list_item = AdminListItemSchema().load(data, session=db.session)
     except (ValidationError, TypeError):
         response = {
-            'success': False,
             'message': f"List item creation validation error, check your data",
             'code': 400,
         }
@@ -483,7 +443,6 @@ def create_user_list_item(user_id, list_id):
 
     if not list_item.title or not list_item.title.strip():
         response = {
-            'success': False,
             'message': f"List item title must not be empty",
             'code': 400,
         }
@@ -495,14 +454,12 @@ def create_user_list_item(user_id, list_id):
 
     if not success:
         response = {
-            'success': False,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List item #{list_item.id} of list #{list.id} for user #{user.id} has been created",
         'data': AdminListItemSchema().dump(list_item),
         'code': 200,
@@ -522,7 +479,6 @@ def update_user_list_item(user_id, list_id, list_item_id):
 
     if not user:
         response = {
-            'success': False,
             'message': f"User #{user_id} not found",
             'code': 404,
         }
@@ -532,7 +488,6 @@ def update_user_list_item(user_id, list_id, list_item_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List #{list_id} for user #{user_id} not found",
             'code': 404,
         }
@@ -544,7 +499,6 @@ def update_user_list_item(user_id, list_id, list_item_id):
 
     if not list_item:
         response = {
-            'success': False,
             'message': f"List item #{list_item_id} of list #{list_id} for user #{user_id} not found",
             'code': 404,
         }
@@ -554,7 +508,6 @@ def update_user_list_item(user_id, list_id, list_item_id):
         list_item = AdminListItemSchema().load(data, instance=list_item, session=db.session)
     except (ValidationError, TypeError):
         response = {
-            'success': False,
             'message': f"List item creation validation error, check your data",
             'code': 400,
         }
@@ -562,7 +515,6 @@ def update_user_list_item(user_id, list_id, list_item_id):
 
     if not list_item.title or not list_item.title.strip():
         response = {
-            'success': False,
             'message': f"List item title must not be empty",
             'code': 400,
         }
@@ -574,14 +526,12 @@ def update_user_list_item(user_id, list_id, list_item_id):
 
     if not success:
         response = {
-            'success': False,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List item #{list_item.id} of list #{list.id} for user #{user.id} has been updated",
         'data': AdminListItemSchema().dump(list_item),
         'code': 200,
@@ -600,7 +550,6 @@ def delete_user_list_item(user_id, list_id, list_item_id):
 
     if not user:
         response = {
-            'success': False,
             'message': f"User #{user_id} not found",
             'code': 404,
         }
@@ -610,7 +559,6 @@ def delete_user_list_item(user_id, list_id, list_item_id):
 
     if not list:
         response = {
-            'success': False,
             'message': f"List #{list_id} for user #{user_id} not found",
             'code': 404,
         }
@@ -622,7 +570,6 @@ def delete_user_list_item(user_id, list_id, list_item_id):
 
     if not list_item:
         response = {
-            'success': False,
             'message': f"List item #{list_item_id} of list #{list_id} for user #{user_id} not found",
             'code': 404,
         }
@@ -632,14 +579,12 @@ def delete_user_list_item(user_id, list_id, list_item_id):
 
     if not success:
         response = {
-            'success': True,
             'message': message,
             'code': 400,
         }
         return jsonify(response), 400
 
     response = {
-        'success': True,
         'message': f"List item #{list_item.id} of list #{list.id} has been deleted",
         'data': AdminListItemSchema().dump(list_item),
         'code': 200,

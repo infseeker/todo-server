@@ -63,8 +63,7 @@ from src.api import *
 @app.route('/', methods=['GET'])
 def index():
     response = {
-        'success': True,
-        'message': "ToDo Project Index URL",
+        'message': "ToDo Project Index Page",
         'path': '/',
         'data': {'action': 'index'},
         'code': 200,
@@ -75,7 +74,6 @@ def index():
 @app.route('/todo/api', methods=['GET'])
 def api():
     response = {
-        'success': True,
         'message': "ToDo Project API",
         'path': '/todo/api',
         'data': {'action': 'api'},
