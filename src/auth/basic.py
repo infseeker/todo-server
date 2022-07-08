@@ -20,7 +20,6 @@ from ..models.User import *
 app.config.update(
     SECRET_KEY=os.environ['SECRET_KEY'],
     SESSION_COOKIE_HTTPONLY=True,
-    REMEMBER_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
     SESSION_COOKIE_SECURE=os.environ['SESSION_COOKIE_SECURE']
 )
@@ -50,6 +49,11 @@ cors = CORS(
 login_manager = LoginManager()
 login_manager.init_app(app)
 login_manager.session_protection = 'strong'
+app.config.update(
+    REMEMBER_COOKIE_HTTPONLY=True,
+    REMEMBER_COOKIE_SAMESITE='Lax',
+    REMEMBER_COOKIE_SECURE=os.environ['SESSION_COOKIE_SECURE']
+)
 
 
 @login_manager.unauthorized_handler
