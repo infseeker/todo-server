@@ -537,6 +537,31 @@ def get_user_image():
     return jsonify(response), 200
 
 
+@app.route('/todo/api/user/delete-user-image', methods=['DELETE'])
+@login_required
+def delete_user_image():
+    if not current_user.image:
+        response = {
+            'message': f"Image not found",
+            'code': 404,
+        }
+        return jsonify(response), 404
+
+    current_user.image = None
+
+    success, message = current_user.update()
+
+    if not success:
+        response = {'message': message, 'code': 400}
+        return jsonify(response), 400
+
+    response = {
+        'message': f"User image has been deleted",
+        'code': 200,
+    }
+    return jsonify(response), 200
+
+
 @app.route('/todo/api/user/update', methods=['PUT'])
 @login_required
 def update():
