@@ -18,7 +18,7 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(16), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(254), unique=True, nullable=False)
-    image_path = db.Column(db.String(4096))
+    image = db.Column(db.Text)
     social_id = db.Column(db.String(256))
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
@@ -38,7 +38,7 @@ class User(db.Model, UserMixin):
         username=None,
         email=None,
         password_hash=None,
-        image_path=None,
+        image=None,
         social_id=None,
         is_activated=None,
         is_admin=None,
@@ -47,7 +47,7 @@ class User(db.Model, UserMixin):
         self.username = username
         self.email = db.func.lower(email)
         self.password_hash = generate_password_hash(password_hash)
-        self.image_path = image_path
+        self.image = image
         self.social_id = social_id
         self.access_code = (User.generate_access_code(),)
         self.is_activated = is_activated
@@ -141,7 +141,7 @@ user_schema = UserSchema(
         'access_code',
         'is_deleted',
         'social_id',
-        'image_path'
+        'image'
     ]
 )
 
@@ -156,7 +156,7 @@ users_schema = UserSchema(
         'access_code',
         'is_deleted',
         'social_id',
-        'image_path'
+        'image'
     ],
     many=True,
 )
@@ -176,7 +176,7 @@ class AdminUserSchema(SQLAlchemyAutoSchema):
     email = auto_field()
     password = auto_field('password_hash', load_only=True)
     social_id = auto_field(dump_only=True)
-    image_path = auto_field()
+    image = auto_field()
     access_code = auto_field(dump_only=True)
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)

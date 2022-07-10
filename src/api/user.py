@@ -1,3 +1,4 @@
+import base64
 import re
 from flask import request, jsonify
 from marshmallow import ValidationError
@@ -518,6 +519,24 @@ def get_user_data():
     return jsonify(response), 200
 
 
+@app.route('/todo/api/user/user-image', methods=['GET'])
+@login_required
+def get_user_image():
+    if not current_user.image:
+        response = {
+            'message': f"Image for current user not found",
+            'code': 404,
+        }
+        return jsonify(response), 404
+
+    response = {
+        'message': f"Image for current user loaded",
+        'image': current_user.image,
+        'code': 200,
+    }
+    return jsonify(response), 200
+
+
 @app.route('/todo/api/user/update', methods=['PUT'])
 @login_required
 def update():
@@ -525,11 +544,26 @@ def update():
     user = current_user
 
     password = data.get('password')
+    image = data.get('image')
+
+    if (not password or not password.strip()) and (not image or not image.strip()):
+        response = {'message': 'All data fields are empty', 'code': 400}
+        return jsonify(response), 400
+
     if password:
         if not check_password()[0].json['code'] == 200:
             return check_password()
-
         user.password_hash = generate_password_hash(password)
+
+    if image:
+        try:
+            if len(image) > 2097152:
+                response = {'message': 'Image uploading failed: exceeds maximum size', 'code': 400}
+                return jsonify(response), 400
+            user.image = image
+        except:
+            response = {'message': 'Image uploading failed', 'code': 400}
+            return jsonify(response), 400
 
     success, message = user.update()
 
