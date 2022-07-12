@@ -582,9 +582,19 @@ def update():
 
     if image:
         try:
+            pattern = re.compile('^data:image/(jpeg|png);base64')
+
+            if not pattern.match(image):
+                response = {
+                    'message': f"Image string has wrong format",
+                    'code': 400,
+                }
+                return jsonify(response), 400
+                
             if len(image) > 2097152:
                 response = {'message': 'Image uploading failed: exceeds maximum size', 'code': 400}
                 return jsonify(response), 400
+                
             user.image = image
         except:
             response = {'message': 'Image uploading failed', 'code': 400}
