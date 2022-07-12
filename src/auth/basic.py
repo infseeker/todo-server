@@ -21,7 +21,7 @@ app.config.update(
     SECRET_KEY=os.environ['SECRET_KEY'],
     SESSION_COOKIE_HTTPONLY=True,
     SESSION_COOKIE_SAMESITE='Lax',
-    SESSION_COOKIE_SECURE=eval(os.environ['SESSION_COOKIE_SECURE'])
+    SESSION_COOKIE_SECURE=eval(os.environ['SESSION_COOKIE_SECURE']),
 )
 
 # CSRF Protection
@@ -52,7 +52,7 @@ login_manager.session_protection = 'strong'
 app.config.update(
     REMEMBER_COOKIE_HTTPONLY=True,
     REMEMBER_COOKIE_SAMESITE='Lax',
-    REMEMBER_COOKIE_SECURE=eval(os.environ['SESSION_COOKIE_SECURE'])
+    REMEMBER_COOKIE_SECURE=eval(os.environ['SESSION_COOKIE_SECURE']),
 )
 
 
@@ -75,8 +75,8 @@ def forbidden(e):
 
 
 @login_manager.user_loader
-def get_user(id):
-    return User.query.get(id)
+def load_user(user_id):
+    return User.query.filter_by(session_id=user_id).first()
 
 
 # authorization

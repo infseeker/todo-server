@@ -1,4 +1,5 @@
 import random
+import uuid
 
 from app import db
 from sqlalchemy import exc
@@ -11,7 +12,7 @@ from werkzeug.security import generate_password_hash, check_password_hash
 class User(db.Model, UserMixin):
     __tablename__ = 'users'
     __table_args__ = (
-        db.UniqueConstraint('username', 'email', 'social_id', name='users_unique_fields'),
+        db.UniqueConstraint('username', 'email', 'session_id', name='users_unique_fields'),
     )
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
@@ -19,7 +20,7 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(254), unique=True, nullable=False)
     image = db.Column(db.Text)
-    social_id = db.Column(db.String(256))
+    session_id = db.Column(db.String(256), nullable=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     updated = db.Column(
@@ -39,20 +40,23 @@ class User(db.Model, UserMixin):
         email=None,
         password_hash=None,
         image=None,
-        social_id=None,
+        session_id=None,
         is_activated=None,
         is_admin=None,
-        is_deleted=None
+        is_deleted=None,
     ):
         self.username = username
         self.email = db.func.lower(email)
         self.password_hash = generate_password_hash(password_hash)
         self.image = image
-        self.social_id = social_id
+        self.session_id = uuid.uuid4()
         self.access_code = (User.generate_access_code(),)
         self.is_activated = is_activated
         self.is_admin = is_admin
         self.is_deleted = is_deleted
+
+    def get_id(self):
+        return str(self.session_id)
 
     def create(self):
         try:
@@ -87,6 +91,7 @@ class User(db.Model, UserMixin):
 
     def login(self):
         self.last_login = db.func.now()
+        
         try:
             db.session.add(self)
             db.session.commit()
@@ -121,7 +126,7 @@ class UserSchema(SQLAlchemyAutoSchema):
     username = auto_field()
     email = auto_field()
     password = auto_field('password_hash', load_only=True)
-    social_id = auto_field(dump_only=True)
+    session_id = auto_field(dump_only=True)
     is_activated = auto_field(dump_only=True)
     access_code = auto_field(dump_only=True)
     is_admin = auto_field(dump_only=True)
@@ -140,8 +145,8 @@ user_schema = UserSchema(
         'last_login',
         'access_code',
         'is_deleted',
-        'social_id',
-        'image'
+        'session_id',
+        'image',
     ]
 )
 
@@ -155,8 +160,8 @@ users_schema = UserSchema(
         'last_login',
         'access_code',
         'is_deleted',
-        'social_id',
-        'image'
+        'session_id',
+        'image',
     ],
     many=True,
 )
@@ -175,7 +180,7 @@ class AdminUserSchema(SQLAlchemyAutoSchema):
     username = auto_field()
     email = auto_field()
     password = auto_field('password_hash', load_only=True)
-    social_id = auto_field(dump_only=True)
+    session_id = auto_field(dump_only=True)
     image = auto_field()
     access_code = auto_field(dump_only=True)
     created = auto_field(dump_only=True)

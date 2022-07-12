@@ -1,5 +1,7 @@
 import base64
+import uuid
 import re
+
 from flask import request, jsonify
 from marshmallow import ValidationError
 from flask_login import current_user, login_user, login_required, logout_user
@@ -440,11 +442,11 @@ def login():
         if user.is_activated:
             if not user.is_deleted:
 
-                login_user(user, remember=True)
-
                 success, message = user.login()
 
                 if success:
+                    login_user(user, remember=True)
+
                     response = {
                         'message': f"You are logged in",
                         'email': user.email,
@@ -579,6 +581,7 @@ def update():
         if not check_password()[0].json['code'] == 200:
             return check_password()
         user.password_hash = generate_password_hash(password)
+        user.session_id = uuid.uuid4()
 
     if image:
         try:
@@ -594,7 +597,7 @@ def update():
             if len(image) > 2097152:
                 response = {'message': 'Image uploading failed: exceeds maximum size', 'code': 400}
                 return jsonify(response), 400
-                
+
             user.image = image
         except:
             response = {'message': 'Image uploading failed', 'code': 400}
@@ -640,6 +643,7 @@ def delete():
         if not user.is_deleted:
             logout_user()
             user.is_deleted = True
+            user.session_id = uuid.uuid4()
 
             success, message = user.update()
 
