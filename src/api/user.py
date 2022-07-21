@@ -756,14 +756,14 @@ def send_email_with_access_code(user):
             msg = Message(
                 subject="ToDo: Пользователь зарегистрирован",
                 sender=app.config.get("MAIL_USERNAME"),
-                recipients=[f'<{user.email}>', '<infseek@gmail.com>'],
+                recipients=[f'<{user.email}>', '<infseeker.todo@gmail.com>'],
                 body=f"Код активации действителен в течение 15 минут.\nИмя пользователя: {user.username}\nEmail: {user.email}\nКод активации: {user.access_code}",
             )
         else:
             msg = Message(
                 subject="ToDo: Восстановление доступа",
                 sender=app.config.get("MAIL_USERNAME"),
-                recipients=[f'<{user.email}>', '<infseek@gmail.com>'],
+                recipients=[f'<{user.email}>', '<infseeker.todo@gmail.com>'],
                 body=f"Код восстановления действителен в течение 15 минут.\nИмя пользователя: {user.username}\nEmail: {user.email}\nКод восстановления: {user.access_code}",
             )
 
