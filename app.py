@@ -19,6 +19,8 @@ for env_file in ('.env', '.flaskenv'):
     if os.path.exists(env):
         load_dotenv(env)
 
+# json to utf-8
+app.config['JSON_AS_ASCII'] = False
 
 # data handling
 app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL'].replace("postgres://", "postgresql://", 1)
