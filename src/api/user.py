@@ -450,6 +450,7 @@ def login():
                     response = {
                         'message': f"You are logged in",
                         'email': user.email,
+                        'username': user.username,
                         'admin': user.is_admin,
                         'code': 200,
                     }
@@ -461,6 +462,7 @@ def login():
                 response = {
                     'message': f"Your account was deleted",
                     'deleted': True,
+                    'username': user.username,
                     'email': user.email,
                     'code': 403,
                 }
@@ -469,6 +471,7 @@ def login():
             response = {
                 'message': f"Your account is not activated",
                 'inactive': True,
+                'username': user.username,
                 'email': user.email,
                 'code': 403,
             }
@@ -583,7 +586,7 @@ def update():
                     'code': 400,
                 }
                 return jsonify(response), 400
-                
+
             if len(image) > 2097152:
                 response = {'message': 'Image uploading failed: exceeds maximum size', 'code': 400}
                 return jsonify(response), 400
