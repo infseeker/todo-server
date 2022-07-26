@@ -486,25 +486,15 @@ def check_session():
     if not current_user.is_authenticated:
         response = {
             'message': f"You are not authenticated",
-            'login': False,
             'code': 401,
         }
         return jsonify(response), 401
 
-    if not current_user.is_admin:
-        response = {
-            'message': f"You are logged in",
-            'login': True,
-            'email': current_user.email,
-            'code': 200,
-        }
-        return jsonify(response), 200
-
     response = {
-        'message': f"You are logged in",
-        'login': True,
-        'admin': True,
+        'username': current_user.username,
         'email': current_user.email,
+        'admin': True if current_user.is_admin else False,
+        'message': f"You are logged in",
         'code': 200,
     }
     return jsonify(response), 200
