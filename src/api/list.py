@@ -191,8 +191,6 @@ def create_list_item(list_id):
         }
         return jsonify(response), 400
 
-    list_item.list_id = list_id
-
     if not list_item.title or not list_item.title.strip():
         response = {
             'message': f"List item title must not be empty",
@@ -200,7 +198,7 @@ def create_list_item(list_id):
         }
         return jsonify(response), 400
 
-    list_item.title = list_item.title.strip()
+    list_item.list_id = list_id
 
     success, message = list_item.create()
     if not success:

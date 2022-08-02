@@ -28,7 +28,7 @@ class ListItem(db.Model):
         is_liked=False,
         position=0,
     ):
-        self.title = title or None
+        self.title = title.strip() or None
         self.is_done = is_done
         self.is_liked = is_liked
         self.position = position
@@ -75,7 +75,7 @@ class ListItemSchema(SQLAlchemyAutoSchema):
     title = auto_field()
     is_done = auto_field()
     is_liked = auto_field()
-    position = auto_field(dump_only=True)
+    position = auto_field()
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)
 
@@ -98,6 +98,6 @@ class AdminListItemSchema(SQLAlchemyAutoSchema):
     title = auto_field()
     is_done = auto_field()
     is_liked = auto_field()
-    position = auto_field(dump_only=True)
+    position = auto_field()
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)
