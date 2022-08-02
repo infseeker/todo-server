@@ -7,6 +7,9 @@ __pycache__/
 .env
 env/
 
+# Services
+wsgi.py
+
 # Editor directories and files
 .vscode/*
 !.vscode/extensions.json
