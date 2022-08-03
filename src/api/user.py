@@ -503,18 +503,7 @@ def check_session():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/user-data', methods=['GET'])
-@login_required
-def get_user_data():
-    response = {
-        'message': f"You are logged in",
-        'data': user_schema.dump(current_user),
-        'code': 200,
-    }
-    return jsonify(response), 200
-
-
-@app.route('/todo/api/user/user-image', methods=['GET'])
+@app.route('/todo/api/user/image', methods=['GET'])
 @login_required
 def get_user_image():
     if not current_user.image:
@@ -532,49 +521,17 @@ def get_user_image():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/delete-user-image', methods=['DELETE'])
+@app.route('/todo/api/user/image', methods=['PUT'])
 @login_required
-def delete_user_image():
-    if not current_user.image:
-        response = {
-            'message': f"Image not found",
-            'code': 404,
-        }
-        return jsonify(response), 404
-
-    current_user.image = None
-
-    success, message = current_user.update()
-
-    if not success:
-        response = {'message': message, 'code': 400}
-        return jsonify(response), 400
-
-    response = {
-        'message': f"User image has been deleted",
-        'code': 200,
-    }
-    return jsonify(response), 200
-
-
-@app.route('/todo/api/user/update', methods=['PUT'])
-@login_required
-def update():
+def change_user_image():
     data = request.json
     user = current_user
 
-    password = data.get('password')
     image = data.get('image')
 
-    if (not password or not password.strip()) and (not image or not image.strip()):
+    if not image or not image.strip():
         response = {'message': 'All data fields are empty', 'code': 400}
         return jsonify(response), 400
-
-    if password:
-        if not check_password()[0].json['code'] == 200:
-            return check_password()
-        user.password_hash = generate_password_hash(password)
-        user.session_id = uuid.uuid4()
 
     if image:
         try:
@@ -605,6 +562,76 @@ def update():
     response = {
         'message': f"Current user has been updated",
         'data': user_schema.dump(user),
+        'code': 200,
+    }
+    return jsonify(response), 200
+
+
+@app.route('/todo/api/user/image', methods=['DELETE'])
+@login_required
+def delete_user_image():
+    if not current_user.image:
+        response = {
+            'message': f"Image not found",
+            'code': 404,
+        }
+        return jsonify(response), 404
+
+    current_user.image = None
+
+    success, message = current_user.update()
+
+    if not success:
+        response = {'message': message, 'code': 400}
+        return jsonify(response), 400
+
+    response = {
+        'message': f"User image has been deleted",
+        'code': 200,
+    }
+    return jsonify(response), 200
+
+
+@app.route('/todo/api/user/password', methods=['PUT'])
+@login_required
+def change_password():
+    data = request.json
+    user = current_user
+
+    old_password = data.get('old_password')
+    new_password = data.get('password')
+
+    if not old_password or not old_password.strip():
+        response = {'message': 'Old password field must be not empty', 'code': 400}
+        return jsonify(response), 400
+
+    if not user.verify_password(old_password):
+        response = {
+            'message': f"Current password is incorrect",
+            'code': 400,
+        }
+        return jsonify(response), 400
+
+    if not new_password or not new_password.strip():
+        response = {'message': 'Password field must be not empty', 'code': 400}
+        return jsonify(response), 400
+
+    if not check_password()[0].json['code'] == 200:
+        return check_password()
+
+    user.password_hash = generate_password_hash(new_password)
+    user.session_id = uuid.uuid4()
+
+    success, message = user.update()
+
+    if not success:
+        response = {'message': message, 'code': 400}
+        return jsonify(response), 400
+
+    login_user(user, remember=True)
+
+    response = {
+        'message': f"Password for current user has been updated",
         'code': 200,
     }
     return jsonify(response), 200
