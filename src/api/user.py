@@ -1,7 +1,6 @@
 import base64
 import uuid
 import re
-from mimetypes import guess_extension
 
 from flask import request, jsonify, send_from_directory
 from marshmallow import ValidationError

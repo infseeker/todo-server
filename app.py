@@ -50,6 +50,7 @@ mail = Mail(app)
 # reCaptcha config
 app.config['RECAPTCHA_SECRET_KEY'] = os.environ['RECAPTCHA_SECRET_KEY']
 
+
 # user images folder
 app.config['USER_IMGS_PATH'] = os.environ['USER_IMGS_PATH']
 
@@ -61,10 +62,19 @@ scheduler = APScheduler()
 scheduler.init_app(app)
 scheduler.start()
 
+
+# handler for all unhandled 400's code error exceptions
+@app.errorhandler(400)
+def forbidden(e):
+    response = {'message': e.description, 'code': 400}
+    return jsonify(response), 400
+
+
 # init api
 from src.api import *
 
 
+# actions for initial routes
 @app.route('/', methods=['GET'])
 def index():
     response = {
@@ -90,8 +100,3 @@ def api():
 # run app
 if __name__ == '__main__':
     app.run(debug=True, host='0.0.0.0')
-
-
-# . env/bin/activate
-# export FLASK_ENV=development
-# flask run --host=0.0.0.0 --port=8080

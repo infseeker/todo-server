@@ -36,7 +36,6 @@ cors = CORS(
             'origins': [
                 'http://192.168.0.2:3000',
                 'http://127.0.0.1:3000',
-                'http://dev.localhost:3000',
                 'http://localhost:3000',
             ]
         }
@@ -63,15 +62,9 @@ def unauthorized():
 
 
 @app.errorhandler(403)
-def forbidden(e):
+def forbidden():
     response = {'message': 'You do not have permissions', 'code': 403}
     return jsonify(response), 403
-
-
-@app.errorhandler(400)
-def forbidden(e):
-    response = {'message': e.description, 'code': 400}
-    return jsonify(response), 400
 
 
 @login_manager.user_loader
