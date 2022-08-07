@@ -50,6 +50,9 @@ mail = Mail(app)
 # reCaptcha config
 app.config['RECAPTCHA_SECRET_KEY'] = os.environ['RECAPTCHA_SECRET_KEY']
 
+# user images folder
+app.config['USER_IMGS_PATH'] = os.environ['USER_IMGS_PATH']
+
 
 # scheduler
 scheduler_settings = {'SCHEDULER_API_ENABLED': True}

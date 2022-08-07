@@ -1,8 +1,9 @@
 import base64
 import uuid
 import re
+from mimetypes import guess_extension
 
-from flask import request, jsonify
+from flask import request, jsonify, send_from_directory
 from marshmallow import ValidationError
 from flask_login import current_user, login_user, login_required, logout_user
 from werkzeug.exceptions import *
@@ -450,6 +451,7 @@ def login():
                     response = {
                         'message': f"You are logged in",
                         'email': user.email,
+                        'image': user.image,
                         'username': user.username,
                         'admin': user.is_admin,
                         'code': 200,
@@ -461,9 +463,10 @@ def login():
             else:
                 response = {
                     'message': f"Your account was deleted",
-                    'deleted': True,
                     'username': user.username,
                     'email': user.email,
+                    'image': user.image,
+                    'deleted': True,
                     'code': 403,
                 }
                 return jsonify(response), 403
@@ -496,6 +499,7 @@ def check_session():
     response = {
         'username': current_user.username,
         'email': current_user.email,
+        'image': current_user.image,
         'admin': True if current_user.is_admin else False,
         'message': f"You are logged in",
         'code': 200,
@@ -503,22 +507,19 @@ def check_session():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/image', methods=['GET'])
+@app.route('/todo/api/user/image/<image>', methods=['GET'])
 @login_required
-def get_user_image():
-    if not current_user.image:
+def get_user_image(image):
+    if not current_user.image == image:
         response = {
             'message': f"Image for current user not found",
             'code': 404,
         }
         return jsonify(response), 404
 
-    response = {
-        'message': f"Image for current user loaded",
-        'image': current_user.image,
-        'code': 200,
-    }
-    return jsonify(response), 200
+    image_folder = os.path.join(os.path.dirname(app.instance_path), app.config['USER_IMGS_PATH'])
+
+    return send_from_directory(image_folder, current_user.image)
 
 
 @app.route('/todo/api/user/image', methods=['PUT'])
@@ -527,28 +528,45 @@ def change_user_image():
     data = request.json
     user = current_user
 
-    image = data.get('image')
+    image_str = data.get('image')
 
-    if not image or not image.strip():
+    if not image_str or not image_str.strip():
         response = {'message': 'All data fields are empty', 'code': 400}
         return jsonify(response), 400
 
-    if image:
+    if image_str:
         try:
-            pattern = re.compile('^data:image/(jpeg|png);base64')
+            pattern = re.compile('^data:image/(jpeg|png);base64,')
 
-            if not pattern.match(image):
+            if not pattern.match(image_str):
                 response = {
                     'message': f"Image string has wrong format",
                     'code': 400,
                 }
                 return jsonify(response), 400
 
-            if len(image) > 2097152:
+            if len(image_str) > 2097152:
                 response = {'message': 'Image uploading failed: exceeds maximum size', 'code': 400}
                 return jsonify(response), 400
 
-            user.image = image
+            image_folder = os.path.join(
+                os.path.dirname(app.instance_path), app.config['USER_IMGS_PATH']
+            )
+
+            try:
+                os.remove(f'{image_folder}/{user.image}')
+            except OSError:
+                pass
+
+            image_ext = re.search('(jpeg|png)', image_str).group(1)
+            image_str = re.sub(pattern, '', image_str)
+            image_file = base64.b64decode(image_str)
+            image_name = uuid.uuid4()
+            with open(f"{image_folder}{image_name}.{image_ext}", "wb") as f:
+                f.write(image_file)
+
+            user.image = f'{image_name}.{image_ext}'
+
         except:
             response = {'message': 'Image uploading failed', 'code': 400}
             return jsonify(response), 400
@@ -560,8 +578,8 @@ def change_user_image():
         return jsonify(response), 400
 
     response = {
-        'message': f"Current user has been updated",
-        'data': user_schema.dump(user),
+        'message': f"Image for current user has been changed",
+        'data': f'{user.image}',
         'code': 200,
     }
     return jsonify(response), 200
@@ -576,6 +594,14 @@ def delete_user_image():
             'code': 404,
         }
         return jsonify(response), 404
+
+    image_folder = os.path.join(os.path.dirname(app.instance_path), app.config['USER_IMGS_PATH'])
+
+    try:
+        os.remove(f'{image_folder}{current_user.image}')
+    except OSError:
+        response = {'message': 'Something went wrong', 'code': 400}
+        return jsonify(response), 400
 
     current_user.image = None
 
@@ -686,88 +712,6 @@ def delete():
     response = {'message': f"Invalid password", 'code': 400}
 
     return jsonify(response), 400
-
-
-@app.route('/todo/api/user/is-deleted', methods=['GET'])
-def is_deleted():
-    email = request.json.get('email')
-    user = User.get_user_by_email(email)
-
-    if user:
-        if user.is_deleted:
-            response = {'message': f"user {user.email} is deleted", 'code': 200}
-            return jsonify(response), 200
-        else:
-            response = {
-                'message': f"user {user.email} is NOT deleted",
-                'code': 400,
-            }
-            return jsonify(response), 400
-
-    response = {
-        'message': f"User {email.strip()} not found",
-        'code': 404,
-    }
-    return jsonify(response), 404
-
-
-@app.route('/todo/api/user/delete-db', methods=['DELETE'])
-def delete_from_db():
-    data = request.json
-    email = data.get('email')
-    password = data.get('password')
-    user = User.get_user_by_email(email)
-
-    if user and user.verify_password(password):
-        logout_user()
-
-        success, message = user.delete()
-        if success:
-            response = {
-                'message': f"User {user.email} was deleted from DB",
-                'code': 200,
-            }
-            return jsonify(response), 200
-        else:
-            response = {
-                'message': message,
-                'code': 400,
-            }
-            return jsonify(response), 400
-
-    response = {
-        'message': f"Invalid email or password",
-        'code': 400,
-    }
-
-    return jsonify(response), 400
-
-
-@app.route('/todo/api/user/is-deleted-db', methods=['GET'])
-def is_deleted_from_db():
-    email = request.json.get('email')
-    user = User.get_user_by_email(email)
-
-    if user:
-        response = {
-            'message': f"User {user.email} is NOT deleted from DB",
-            'code': 400,
-        }
-        return jsonify(response), 400
-
-    response = {'message': f"User with email {email} not found'", 'code': 200}
-    return jsonify(response), 200
-
-
-@app.route('/todo/api/user/all', methods=['GET'])
-def get_all_users():
-    users = User.query.all()
-    response = {
-        'message': "All users",
-        'data': users_schema.dump(users),
-        'code': 200,
-    }
-    return jsonify(response)
 
 
 def send_email_with_access_code(user):
