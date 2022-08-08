@@ -451,6 +451,7 @@ def login():
                         'message': f"You are logged in",
                         'email': user.email,
                         'image': user.image,
+                        'locale': user.locale,
                         'username': user.username,
                         'admin': user.is_admin,
                         'code': 200,
@@ -465,6 +466,7 @@ def login():
                     'username': user.username,
                     'email': user.email,
                     'image': user.image,
+                    'locale': user.locale,
                     'deleted': True,
                     'code': 403,
                 }
@@ -487,8 +489,10 @@ def login():
 
 
 @app.route('/todo/api/user/session', methods=['GET'])
-def check_session():
-    if not current_user.is_authenticated:
+def get_session():
+    user = current_user
+
+    if not user.is_authenticated:
         response = {
             'message': f"You are not authenticated",
             'code': 401,
@@ -496,10 +500,11 @@ def check_session():
         return jsonify(response), 401
 
     response = {
-        'username': current_user.username,
-        'email': current_user.email,
-        'image': current_user.image,
-        'admin': True if current_user.is_admin else False,
+        'username': user.username,
+        'email': user.email,
+        'image': user.image,
+        'locale': user.locale,
+        'admin': True if user.is_admin else False,
         'message': f"You are logged in",
         'code': 200,
     }
@@ -661,6 +666,36 @@ def change_password():
     }
     return jsonify(response), 200
 
+
+@app.route('/todo/api/user/locale', methods=['PUT'])
+@login_required
+def change_locale():
+    data = request.json
+    user = current_user
+
+    locale = data.get('locale')
+
+    if not locale or not locale.strip():
+        response = {'message': 'Locale field must not be empty', 'code': 400}
+        return jsonify(response), 400
+
+    if len(locale) > 15:
+        response = {'message': 'Locale string too long', 'code': 400}
+        return jsonify(response), 400
+
+    user.locale = locale
+
+    success, message = user.update()
+
+    if not success:
+        response = {'message': message, 'code': 400}
+        return jsonify(response), 400
+
+    response = {
+        'message': f"Locale for current user has been updated",
+        'code': 200,
+    }
+    return jsonify(response), 200
 
 @app.route('/todo/api/user/logout', methods=['GET'])
 @login_required

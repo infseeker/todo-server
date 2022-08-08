@@ -19,7 +19,8 @@ class User(db.Model, UserMixin):
     username = db.Column(db.String(16), unique=True, nullable=False)
     password_hash = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(254), unique=True, nullable=False)
-    image = db.Column(db.Text)
+    image = db.Column(db.String(256))
+    locale = db.Column(db.String(16))
     session_id = db.Column(db.String(256), nullable=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
@@ -40,7 +41,7 @@ class User(db.Model, UserMixin):
         email=None,
         password_hash=None,
         image=None,
-        session_id=None,
+        locale=None,
         is_activated=None,
         is_admin=None,
         is_deleted=None,
@@ -49,6 +50,7 @@ class User(db.Model, UserMixin):
         self.email = db.func.lower(email)
         self.password_hash = generate_password_hash(password_hash)
         self.image = image
+        self.locale = locale
         self.session_id = uuid.uuid4()
         self.access_code = (User.generate_access_code(),)
         self.is_activated = is_activated
@@ -126,44 +128,26 @@ class UserSchema(SQLAlchemyAutoSchema):
     username = auto_field()
     email = auto_field()
     password = auto_field('password_hash', load_only=True)
+    image = auto_field()
+    locale = auto_field()
     session_id = auto_field(dump_only=True)
-    is_activated = auto_field(dump_only=True)
     access_code = auto_field(dump_only=True)
-    is_admin = auto_field(dump_only=True)
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)
     last_login = auto_field(dump_only=True)
+    is_activated = auto_field(dump_only=True)
     is_deleted = auto_field(dump_only=True)
+    is_admin = auto_field(dump_only=True)
 
 
 user_schema = UserSchema(
     exclude=[
-        'is_activated',
-        'is_admin',
         'created',
         'updated',
         'last_login',
         'access_code',
-        'is_deleted',
         'session_id',
-        'image',
     ]
-)
-
-
-users_schema = UserSchema(
-    exclude=[
-        # 'is_activated',
-        # 'is_admin',
-        'created',
-        'updated',
-        'last_login',
-        'access_code',
-        'is_deleted',
-        'session_id',
-        'image',
-    ],
-    many=True,
 )
 
 
@@ -182,6 +166,7 @@ class AdminUserSchema(SQLAlchemyAutoSchema):
     password = auto_field('password_hash', load_only=True)
     session_id = auto_field(dump_only=True)
     image = auto_field()
+    locale = auto_field()
     access_code = auto_field(dump_only=True)
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)
