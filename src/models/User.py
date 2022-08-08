@@ -20,7 +20,7 @@ class User(db.Model, UserMixin):
     password_hash = db.Column(db.String(128), nullable=False)
     email = db.Column(db.String(254), unique=True, nullable=False)
     image = db.Column(db.String(256))
-    locale = db.Column(db.String(16))
+    locale = db.Column(db.String(16), nullable=False, default='sy')
     session_id = db.Column(db.String(256), nullable=False)
     is_admin = db.Column(db.Boolean, nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
