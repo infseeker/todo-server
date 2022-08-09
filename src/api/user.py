@@ -2,7 +2,7 @@ import base64
 import uuid
 import re
 
-from flask import request, jsonify, send_from_directory
+from flask import request, session, jsonify, send_from_directory
 from marshmallow import ValidationError
 from flask_login import current_user, login_user, login_required, logout_user
 from werkzeug.exceptions import *
@@ -446,6 +446,7 @@ def login():
 
                 if success:
                     login_user(user, remember=True)
+                    session.permanent = True
 
                     response = {
                         'message': f"You are logged in",
