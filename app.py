@@ -53,6 +53,7 @@ app.config['RECAPTCHA_SECRET_KEY'] = os.environ['RECAPTCHA_SECRET_KEY']
 
 # user images folder
 app.config['USER_IMGS_PATH'] = os.environ['USER_IMGS_PATH']
+app.config['SEND_FILE_MAX_AGE_DEFAULT'] = 2678400
 
 
 # scheduler

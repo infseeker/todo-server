@@ -524,7 +524,14 @@ def get_user_image(image):
 
     image_folder = os.path.join(os.path.dirname(app.instance_path), app.config['USER_IMGS_PATH'])
 
-    return send_from_directory(image_folder, current_user.image)
+    try:
+        return send_from_directory(image_folder, current_user.image)
+    except:
+        response = {
+            'message': f"Something went wrong",
+            'code': 400,
+        }
+        return jsonify(response), 400
 
 
 @app.route('/todo/api/user/image', methods=['PUT'])
@@ -697,6 +704,7 @@ def change_locale():
         'code': 200,
     }
     return jsonify(response), 200
+
 
 @app.route('/todo/api/user/logout', methods=['GET'])
 @login_required
