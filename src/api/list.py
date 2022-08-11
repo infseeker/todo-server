@@ -30,6 +30,7 @@ def get_lists():
 @login_required
 def create_list():
     data = request.json
+    items = data.get('items')
 
     try:
         list = list_schema.load(data, session=db.session)
@@ -59,6 +60,20 @@ def create_list():
             'code': 400,
         }
         return jsonify(response), 400
+
+    if items:
+        try:
+            items = list_items_schema.load(items, session=db.session)
+            for item in items:
+                item.list_id = list.id
+        except (ValidationError, TypeError):
+            response = {
+                'message': f"List items creation validation error, check your data",
+                'code': 400,
+            }
+            return jsonify(response), 400
+
+        success, message = ListItem.createAll(items)
 
     response = {
         'message': f"List has been created",

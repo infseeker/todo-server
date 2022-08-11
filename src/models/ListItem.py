@@ -61,6 +61,17 @@ class ListItem(db.Model):
             db.session.rollback()
             return False, "Something went wrong"
 
+    @staticmethod
+    def createAll(items):
+        try:
+            db.session.add_all(items)
+            db.session.commit()
+            return True, "List items have been created"
+        except:
+            db.session.rollback()
+            return False, "Something went wrong"
+
+
 class ListItemSchema(SQLAlchemyAutoSchema):
     class Meta:
         model = ListItem
