@@ -9,6 +9,7 @@ class ListItem(db.Model):
 
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     list_id = db.Column(db.Integer, db.ForeignKey(List.id, ondelete='CASCADE'), nullable=False)
+    lists = db.relationship('List')
     title = db.Column(db.Text, nullable=False, default='New List Item')
     is_done = db.Column(db.Boolean, nullable=False, default=False)
     is_liked = db.Column(db.Boolean, nullable=False, default=False)

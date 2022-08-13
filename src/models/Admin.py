@@ -1,3 +1,4 @@
+from ast import Not
 import uuid
 
 from app import app, db
@@ -40,7 +41,24 @@ class DefaultModelView(ModelView):
 
 
 class UserView(DefaultModelView):
-    list_columns = [
+    column_default_sort = ('id', False)
+
+    column_sortable_list = [
+        ('id', User.id),
+        'username',
+        'email',
+        'image',
+        'locale',
+        'access_code',
+        'is_admin',
+        'is_deleted',
+        'is_activated',
+        'created',
+        'updated',
+        'last_login',
+    ]
+
+    column_list = [
         'id',
         'username',
         'email',
@@ -78,7 +96,6 @@ class UserView(DefaultModelView):
         'is_deleted',
     ]
 
-
     def on_model_change(self, form, user, is_created):
         if is_created:
             user.session_id = uuid.uuid4()
@@ -90,18 +107,86 @@ class UserView(DefaultModelView):
 
 
 class ListView(DefaultModelView):
-    list_columns = [
+    column_default_sort = ('user_id', False)
+
+    column_list = [
         'id',
         'user_id',
         'title',
+        'created',
+        'updated',
     ]
-    column_searchable_list = ['title']
+
+    column_sortable_list = [
+        ('id', List.id),
+        ('user_id', List.user_id),
+        'title',
+        'created',
+        'updated',
+    ]
+
+    form_create_rules = [
+        'users',
+        'title',
+    ]
+
+    form_edit_rules = [
+        'users',
+        'title',
+    ]
+
+    column_searchable_list = ['user_id', 'title']
 
 
 class ListItemView(DefaultModelView):
-    form_excluded_columns = ('created', 'updated')
-    column_exclude_list = ['created', 'updated']
-    column_searchable_list = ['title']
+    column_default_sort = ('list_id', False)
+    
+    column_list = [
+        'id',
+        'list_id',
+        'title',
+        'is_done',
+        'is_liked',
+        'position',
+        'created',
+        'updated',
+    ]
+
+    column_sortable_list = [
+        ('id', ListItem.id),
+        ('list_id', ListItem.list_id),
+        'title',
+        'is_done',
+        'is_liked',
+        'position',
+        'created',
+        'updated',
+    ]
+
+    form_create_rules = [
+        'lists',
+        'title',
+        'is_done',
+        'is_liked',
+    ]
+
+    form_edit_rules = [
+        'lists',
+        'title',
+        'is_done',
+        'is_liked',
+    ]
+    column_searchable_list = ['list_id', 'title']
+
+    def on_model_change(self, form, list_item, is_created):
+        if is_created:
+            last_list_item = (
+                db.session.query(ListItem)
+                .filter_by(list_id=list_item.lists.id)
+                .order_by(ListItem.position.desc())
+                .first()
+            )
+            list_item.position = last_list_item.position + 1 if last_list_item else 1
 
 
 admin = Admin(
