@@ -22,7 +22,6 @@ class User(db.Model, UserMixin):
     image = db.Column(db.String(256))
     locale = db.Column(db.String(16), nullable=False, default='sy')
     session_id = db.Column(db.String(256), nullable=False)
-    is_admin = db.Column(db.Boolean, nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     updated = db.Column(
         db.DateTime,
@@ -34,6 +33,7 @@ class User(db.Model, UserMixin):
     access_code = db.Column(db.Integer, default=None)
     is_activated = db.Column(db.Boolean, nullable=False, default=False)
     is_deleted = db.Column(db.Boolean, nullable=False, default=False)
+    is_admin = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(
         self,
@@ -43,8 +43,8 @@ class User(db.Model, UserMixin):
         image=None,
         locale=None,
         is_activated=None,
-        is_admin=None,
         is_deleted=None,
+        is_admin=None,
     ):
         self.username = username
         self.email = db.func.lower(email)
@@ -54,8 +54,8 @@ class User(db.Model, UserMixin):
         self.session_id = uuid.uuid4()
         self.access_code = (User.generate_access_code(),)
         self.is_activated = is_activated
-        self.is_admin = is_admin
         self.is_deleted = is_deleted
+        self.is_admin = is_admin
 
     def get_id(self):
         return str(self.session_id)

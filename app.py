@@ -75,6 +75,10 @@ def forbidden(e):
 from src.api import *
 
 
+# init admin panel
+from src.models.Admin import admin
+
+
 # actions for initial routes
 @app.route('/', methods=['GET'])
 def index():
