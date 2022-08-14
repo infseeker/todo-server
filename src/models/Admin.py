@@ -34,6 +34,9 @@ class DefaultModelView(ModelView):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
+    page_size = 50
+    extra_css = ['/todo/api/admin/static/admin.css']
+
     def is_accessible(self):
         return current_user.is_authenticated and current_user.is_admin
 
@@ -49,7 +52,6 @@ def get_admin_css():
     return send_from_directory(path, 'admin.css')
 
 class UserView(DefaultModelView):
-    page_size = 50
     column_default_sort = ('id', False)
     column_sortable_list = [
         ('id', User.id),
@@ -96,8 +98,7 @@ class UserView(DefaultModelView):
     ]
     column_labels = dict(password_hash='Password')
     column_searchable_list = ['username', 'email']
-    extra_css = ['/todo/api/admin/static/admin.css']
-
+    
 
     def on_model_change(self, form, user, is_created):
         if is_created:
@@ -122,18 +123,15 @@ class UserView(DefaultModelView):
         except Exception as ex:
             if not self.handle_view_exception(ex):
                 flash('Failed to delete user')
-
             self.session.rollback()
-
             return False
         else:
             self.after_model_delete(user)
-
+            
         return True
 
 
 class ListView(DefaultModelView):
-    page_size = 50
     column_default_sort = ('user_id', False)
     column_list = [
         'id',
@@ -158,11 +156,9 @@ class ListView(DefaultModelView):
         'title',
     ]
     column_searchable_list = ['user_id', 'title']
-    extra_css = ['/todo/api/admin/static/admin.css']
 
 
 class ListItemView(DefaultModelView):
-    page_size = 50
     column_default_sort = ('list_id', False)
     column_list = [
         'id',
@@ -197,7 +193,6 @@ class ListItemView(DefaultModelView):
         'is_liked',
     ]
     column_searchable_list = ['list_id', 'title']
-    extra_css = ['/todo/api/admin/static/admin.css']
 
     def on_model_change(self, form, list_item, is_created):
         if is_created:
