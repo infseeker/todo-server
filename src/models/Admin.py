@@ -1,4 +1,4 @@
-from ast import Not
+from flask import flash
 import uuid
 
 from app import app, db
@@ -41,6 +41,8 @@ class DefaultModelView(ModelView):
 
 
 class UserView(DefaultModelView):
+    page_size = 50
+
     column_default_sort = ('id', False)
 
     column_sortable_list = [
@@ -77,9 +79,6 @@ class UserView(DefaultModelView):
         'username',
         'password_hash',
         'email',
-        'image',
-        'locale',
-        'access_code',
         'is_activated',
         'is_deleted',
         'is_admin',
@@ -88,25 +87,51 @@ class UserView(DefaultModelView):
     form_edit_rules = [
         'username',
         'email',
-        'image',
-        'locale',
-        'is_admin',
-        'access_code',
         'is_activated',
         'is_deleted',
+        'is_admin',
     ]
+
+    column_labels = dict(password_hash='Password')
+    column_searchable_list = ['username', 'email']
 
     def on_model_change(self, form, user, is_created):
         if is_created:
             user.session_id = uuid.uuid4()
             user.password_hash = generate_password_hash(form.password_hash.data)
 
-    column_labels = dict(password_hash='Password')
+        else:
+            if user.id == current_user.id and user.is_admin == False:
+                user.is_admin = True
+                flash("You can't take away admin permissions of yourself")
 
-    column_searchable_list = ['username', 'email']
+
+    def delete_model(self, user):
+        if user.id == current_user.id:
+            flash("You cant't delete yourself")
+            return False
+
+        try:
+            self.on_model_delete(user)
+            self.session.delete(user)
+            self.session.commit()
+        except Exception as ex:
+            if not self.handle_view_exception(ex):
+                flash('Failed to delete user')
+
+            self.session.rollback()
+
+            return False
+        else:
+            self.after_model_delete(user)
+
+        return True
+            
 
 
 class ListView(DefaultModelView):
+    page_size = 50
+
     column_default_sort = ('user_id', False)
 
     column_list = [
@@ -139,6 +164,8 @@ class ListView(DefaultModelView):
 
 
 class ListItemView(DefaultModelView):
+    page_size = 50
+
     column_default_sort = ('list_id', False)
     
     column_list = [
@@ -192,7 +219,7 @@ class ListItemView(DefaultModelView):
 admin = Admin(
     app,
     url="/todo/api/admin",
-    name='todo',
+    name='Todo',
     template_mode='bootstrap3',
     index_view=MyAdminIndexView(url='/todo/api/admin'),
 )
