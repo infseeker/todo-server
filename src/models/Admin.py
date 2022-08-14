@@ -1,9 +1,10 @@
-from flask import flash
+import os
 import uuid
 
 from app import app, db
-from flask import redirect
-from flask_login import current_user
+from flask import redirect, flash, send_from_directory
+from flask_login import current_user, login_required
+from src.auth.basic import admin
 from werkzeug.security import generate_password_hash
 
 from src.models.User import User
@@ -40,11 +41,16 @@ class DefaultModelView(ModelView):
         return redirect('/login')
 
 
+@login_required
+@admin.require(403)
+@app.route('/todo/api/admin/static/admin.css', methods=['GET'])
+def get_admin_css():
+    path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../static/')
+    return send_from_directory(path, 'admin.css')
+
 class UserView(DefaultModelView):
     page_size = 50
-
     column_default_sort = ('id', False)
-
     column_sortable_list = [
         ('id', User.id),
         'username',
@@ -59,7 +65,6 @@ class UserView(DefaultModelView):
         'updated',
         'last_login',
     ]
-
     column_list = [
         'id',
         'username',
@@ -74,7 +79,6 @@ class UserView(DefaultModelView):
         'updated',
         'last_login',
     ]
-
     form_create_rules = [
         'username',
         'password_hash',
@@ -83,7 +87,6 @@ class UserView(DefaultModelView):
         'is_deleted',
         'is_admin',
     ]
-
     form_edit_rules = [
         'username',
         'email',
@@ -91,9 +94,10 @@ class UserView(DefaultModelView):
         'is_deleted',
         'is_admin',
     ]
-
     column_labels = dict(password_hash='Password')
     column_searchable_list = ['username', 'email']
+    extra_css = ['/todo/api/admin/static/admin.css']
+
 
     def on_model_change(self, form, user, is_created):
         if is_created:
@@ -126,14 +130,11 @@ class UserView(DefaultModelView):
             self.after_model_delete(user)
 
         return True
-            
 
 
 class ListView(DefaultModelView):
     page_size = 50
-
     column_default_sort = ('user_id', False)
-
     column_list = [
         'id',
         'user_id',
@@ -141,7 +142,6 @@ class ListView(DefaultModelView):
         'created',
         'updated',
     ]
-
     column_sortable_list = [
         ('id', List.id),
         ('user_id', List.user_id),
@@ -149,25 +149,21 @@ class ListView(DefaultModelView):
         'created',
         'updated',
     ]
-
     form_create_rules = [
         'users',
         'title',
     ]
-
     form_edit_rules = [
         'users',
         'title',
     ]
-
     column_searchable_list = ['user_id', 'title']
+    extra_css = ['/todo/api/admin/static/admin.css']
 
 
 class ListItemView(DefaultModelView):
     page_size = 50
-
     column_default_sort = ('list_id', False)
-    
     column_list = [
         'id',
         'list_id',
@@ -178,7 +174,6 @@ class ListItemView(DefaultModelView):
         'created',
         'updated',
     ]
-
     column_sortable_list = [
         ('id', ListItem.id),
         ('list_id', ListItem.list_id),
@@ -189,14 +184,12 @@ class ListItemView(DefaultModelView):
         'created',
         'updated',
     ]
-
     form_create_rules = [
         'lists',
         'title',
         'is_done',
         'is_liked',
     ]
-
     form_edit_rules = [
         'lists',
         'title',
@@ -204,6 +197,7 @@ class ListItemView(DefaultModelView):
         'is_liked',
     ]
     column_searchable_list = ['list_id', 'title']
+    extra_css = ['/todo/api/admin/static/admin.css']
 
     def on_model_change(self, form, list_item, is_created):
         if is_created:
@@ -223,6 +217,7 @@ admin = Admin(
     template_mode='bootstrap3',
     index_view=MyAdminIndexView(url='/todo/api/admin'),
 )
+
 admin.add_link(MenuLink(name='Profile', category='', url='/profile'))
 
 admin.add_view(UserView(User, db.session, name="User"))
