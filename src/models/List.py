@@ -11,7 +11,6 @@ class List(db.Model):
     user_id = db.Column(db.Integer, db.ForeignKey(User.id, ondelete='CASCADE'), nullable=False)
     users = db.relationship('User')
     title = db.Column(db.Text, nullable=False, default='New List')
-    is_liked = db.Column(db.Boolean, nullable=False, default=False)
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     updated = db.Column(
         db.DateTime,
@@ -20,9 +19,8 @@ class List(db.Model):
         server_onupdate=db.func.now(),
     )
 
-    def __init__(self, title=None, is_liked=False):
+    def __init__(self, title=None):
         self.title = title or None
-        self.is_liked = is_liked
 
     def create(self):
         try:
@@ -65,7 +63,6 @@ class ListSchema(SQLAlchemyAutoSchema):
     id = auto_field(dump_only=True)
     user_id = auto_field(dump_only=True)
     title = auto_field()
-    is_liked = auto_field()
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)
 
@@ -86,6 +83,5 @@ class AdminListSchema(SQLAlchemyAutoSchema):
     id = auto_field(dump_only=True)
     user_id = auto_field(dump_only=True)
     title = auto_field()
-    is_liked = auto_field()
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)
