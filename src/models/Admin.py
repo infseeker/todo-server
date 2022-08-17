@@ -136,6 +136,11 @@ class UserView(DefaultModelView):
             shared_lists.delete()
             self.session.commit()
 
+        owned_lists = List.query.filter_by(user_id=user.id)
+        if owned_lists.first():
+            for list in owned_lists:
+                list.shared_with = []
+            self.session.commit()
 
 class ListView(DefaultModelView):
     column_default_sort = ('user_id', False)
@@ -151,7 +156,6 @@ class ListView(DefaultModelView):
         ('id', List.id),
         ('user_id', List.user_id),
         'title',
-        'shared_with',
         'created',
         'updated',
     ]
