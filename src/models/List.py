@@ -1,7 +1,9 @@
 from app import db
 from marshmallow import EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from ..models.User import User
+
+from .User import User
+from .ListUser import ListUser
 
 
 class List(db.Model):
@@ -10,6 +12,7 @@ class List(db.Model):
     id = db.Column(db.Integer, primary_key=True, nullable=False)
     user_id = db.Column(db.Integer, db.ForeignKey(User.id, ondelete='CASCADE'), nullable=False)
     users = db.relationship('User')
+    shared_with = db.relationship('User', secondary='lists_users')
     title = db.Column(db.Text, nullable=False, default='New List')
     created = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     updated = db.Column(

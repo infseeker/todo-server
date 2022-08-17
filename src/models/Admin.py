@@ -7,9 +7,10 @@ from flask_login import current_user, login_required
 from src.auth.basic import admin
 from werkzeug.security import generate_password_hash
 
-from src.models.User import User
-from src.models.List import List
-from src.models.ListItem import ListItem
+from .User import User
+from .List import List
+from .ListItem import ListItem
+from .ListUser import ListUser
 
 from flask_admin import Admin, AdminIndexView, expose
 from flask_admin.contrib.sqla import ModelView
@@ -50,6 +51,7 @@ class DefaultModelView(ModelView):
 def get_admin_css():
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../static/')
     return send_from_directory(path, 'admin.css')
+
 
 class UserView(DefaultModelView):
     column_default_sort = ('id', False)
@@ -98,7 +100,6 @@ class UserView(DefaultModelView):
     ]
     column_labels = dict(password_hash='Password')
     column_searchable_list = ['username', 'email']
-    
 
     def on_model_change(self, form, user, is_created):
         if is_created:
@@ -109,7 +110,6 @@ class UserView(DefaultModelView):
             if user.id == current_user.id and user.is_admin == False:
                 user.is_admin = True
                 flash("You can't take away admin permissions of yourself")
-
 
     def delete_model(self, user):
         if user.id == current_user.id:
@@ -127,8 +127,14 @@ class UserView(DefaultModelView):
             return False
         else:
             self.after_model_delete(user)
-            
+
         return True
+
+    def on_model_delete(self, user):
+        shared_lists = ListUser.query.filter_by(user_id=user.id)
+        if shared_lists.first():
+            shared_lists.delete()
+            self.session.commit()
 
 
 class ListView(DefaultModelView):
@@ -137,6 +143,7 @@ class ListView(DefaultModelView):
         'id',
         'user_id',
         'title',
+        'shared_with',
         'created',
         'updated',
     ]
@@ -144,18 +151,29 @@ class ListView(DefaultModelView):
         ('id', List.id),
         ('user_id', List.user_id),
         'title',
+        'shared_with',
         'created',
         'updated',
     ]
     form_create_rules = [
         'users',
         'title',
+        'shared_with',
     ]
     form_edit_rules = [
         'users',
         'title',
+        'shared_with',
     ]
     column_searchable_list = ['user_id', 'title']
+
+    def on_model_change(self, form, list_model, is_created):
+        list_owner = form.data['users']
+        if list_owner in list_model.shared_with:
+            list_model.shared_with = list(
+                filter(lambda user: user != list_owner, list_model.shared_with)
+            )
+            flash("You can't share list with its owner")
 
 
 class ListItemView(DefaultModelView):

@@ -1,7 +1,7 @@
 from app import db
 from marshmallow import EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
-from ..models.List import List
+from .List import List
 
 
 class ListItem(db.Model):
