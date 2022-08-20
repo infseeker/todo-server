@@ -6,6 +6,7 @@ from flask import Flask, jsonify
 from flask_sqlalchemy import SQLAlchemy
 from flask_marshmallow import Marshmallow
 from flask_migrate import Migrate
+from flask_socketio import SocketIO
 from flask_mail import Mail
 from flask_apscheduler import APScheduler
 
@@ -23,7 +24,9 @@ for env_file in ('.env', '.flaskenv'):
 app.config['JSON_AS_ASCII'] = False
 
 # data handling
-app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL'].replace("postgres://", "postgresql://", 1)
+app.config['SQLALCHEMY_DATABASE_URI'] = os.environ['DATABASE_URL'].replace(
+    "postgres://", "postgresql://", 1
+)
 
 app.config['SQLALCHEMY_TRACK_MODIFICATIONS'] = False
 app.config['JSON_SORT_KEYS'] = False
@@ -62,6 +65,10 @@ app.config.update(scheduler_settings)
 scheduler = APScheduler()
 scheduler.init_app(app)
 scheduler.start()
+
+
+# init websocket
+socketio = SocketIO(app, path='/todo/api/lists/shared', cors_allowed_origins='*')
 
 
 # handler for all unhandled 400's code error exceptions
@@ -104,4 +111,4 @@ def api():
 
 # run app
 if __name__ == '__main__':
-    app.run(debug=True, host='0.0.0.0')
+    socketio.run(app)

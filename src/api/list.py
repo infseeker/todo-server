@@ -1,12 +1,12 @@
-import re
-from this import d
+import functools
+
 from flask import request, jsonify
-from sqlalchemy import asc, desc
 from marshmallow import ValidationError
 from flask_login import current_user, login_required
+from flask_socketio import disconnect
 from werkzeug.exceptions import *
-from flask_mail import Message
-from app import app, db
+
+from app import app, db, socketio
 from ..models.User import *
 from ..models.List import *
 from ..models.ListItem import *
@@ -158,6 +158,24 @@ def delete_list(list_id):
         'code': 200,
     }
     return jsonify(response), 200
+
+
+# check user session for websocket
+def auth_required(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        if not current_user.is_authenticated:
+            disconnect()
+        else:
+            return f(*args, **kwargs)
+    return wrapped
+
+
+@socketio.on('check')
+@auth_required
+def handle_my_custom_event(data):
+    socketio.emit('my response', {'message': '{0} has joined'.format(current_user.username)},
+        broadcast=True)
 
 
 @app.route('/todo/api/lists/<int:list_id>', methods=['GET'])
