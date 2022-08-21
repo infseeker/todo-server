@@ -1,6 +1,7 @@
 import functools
 
 from flask import request, jsonify
+from sqlalchemy import or_
 from marshmallow import ValidationError
 from flask_login import current_user, login_required
 from flask_socketio import disconnect
@@ -16,10 +17,13 @@ from ..auth.basic import *
 @app.route('/todo/api/lists', methods=['GET'])
 @login_required
 def get_lists():
-    lists = List.query.filter_by(user_id=current_user.id).order_by('id')
+    user_lists_query = List.query.filter_by(user_id=current_user.id)
+    shared_lists_query = List.query.filter(List.shared_with.any(User.id == current_user.id))
+
+    lists = user_lists_query.union(shared_lists_query)
+
     response = {
         'message': f"Lists of current user",
-        'user_id': current_user.id,
         'data': lists_schema.dump(lists),
         'code': 200,
     }
@@ -168,20 +172,25 @@ def auth_required(f):
             disconnect()
         else:
             return f(*args, **kwargs)
+
     return wrapped
 
 
 @socketio.on('check')
 @auth_required
 def handle_my_custom_event(data):
-    socketio.emit('my response', {'message': '{0} has joined'.format(current_user.username)},
-        broadcast=True)
+    socketio.emit(
+        'my response', {'message': '{0} has joined'.format(current_user.username)}, broadcast=True
+    )
 
 
 @app.route('/todo/api/lists/<int:list_id>', methods=['GET'])
 @login_required
 def get_list(list_id):
-    list = List.query.filter((List.id == list_id) & (List.user_id == current_user.id)).first()
+    list = List.query.filter(
+        (List.id == list_id)
+        & or_(List.user_id == current_user.id, List.shared_with.any(User.id == current_user.id))
+    ).first()
 
     if not list:
         response = {
@@ -191,10 +200,17 @@ def get_list(list_id):
         return jsonify(response), 404
 
     list_items = ListItem.query.filter(ListItem.list_id == list_id)
+    list_owner = User.query.get(list.user_id)
 
     response = {
         'message': f"List items for list #{list.id}",
-        'user_id': current_user.id,
+        'owner': {
+            'id': list.user_id,
+            'username': list_owner.username,
+            'email': list_owner.email,
+            'image': list_owner.image,
+        },
+        'shared': short_users_schema.dump(list.shared_with),
         'list_id': list.id,
         'data': list_items_schema.dump(list_items),
         'code': 200,

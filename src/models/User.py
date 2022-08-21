@@ -93,7 +93,7 @@ class User(db.Model, UserMixin):
 
     def login(self):
         self.last_login = db.func.now()
-        
+
         try:
             db.session.add(self)
             db.session.commit()
@@ -150,27 +150,18 @@ user_schema = UserSchema(
     ]
 )
 
-
-class AdminUserSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = User
-        ordered = True
-        include_relationships = True
-        load_instance = True
-        unknown = EXCLUDE
-        exclude = ('password_hash', 'access_code')
-
-    id = auto_field(dump_only=True)
-    username = auto_field()
-    email = auto_field()
-    password = auto_field('password_hash', load_only=True)
-    session_id = auto_field(dump_only=True)
-    image = auto_field()
-    locale = auto_field()
-    access_code = auto_field(dump_only=True)
-    created = auto_field(dump_only=True)
-    updated = auto_field(dump_only=True)
-    last_login = auto_field(dump_only=True)
-    is_activated = auto_field()
-    is_deleted = auto_field()
-    is_admin = auto_field()
+short_users_schema = UserSchema(
+    exclude=[
+        'password_hash',
+        'locale',
+        'created',
+        'updated',
+        'last_login',
+        'access_code',
+        'session_id',
+        'is_activated',
+        'is_deleted',
+        'is_admin',
+    ],
+    many=True,
+)

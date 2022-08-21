@@ -1,3 +1,4 @@
+from tokenize import Number
 from app import db
 from marshmallow import EXCLUDE
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
@@ -71,21 +72,6 @@ class ListSchema(SQLAlchemyAutoSchema):
     updated = auto_field(dump_only=True)
 
 
-list_schema = ListSchema(exclude=['updated', 'created', 'users', 'user_id', 'shared_with'])
-lists_schema = ListSchema(exclude=['updated', 'created', 'users', 'user_id', 'shared_with'], many=True)
+list_schema = ListSchema(exclude=['updated', 'created', 'users', 'shared_with'])
+lists_schema = ListSchema(exclude=['updated', 'created', 'users', 'shared_with'], many=True)
 
-
-class AdminListSchema(SQLAlchemyAutoSchema):
-    class Meta:
-        model = List
-        include_fk = True
-        include_relationships = True
-        load_instance = True
-        ordered = True
-        unknown = EXCLUDE
-
-    id = auto_field(dump_only=True)
-    user_id = auto_field(dump_only=True)
-    title = auto_field()
-    created = auto_field(dump_only=True)
-    updated = auto_field(dump_only=True)
