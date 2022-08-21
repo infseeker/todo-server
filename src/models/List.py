@@ -66,12 +66,13 @@ class ListSchema(SQLAlchemyAutoSchema):
     id = auto_field(dump_only=True)
     user_id = auto_field(dump_only=True)
     title = auto_field()
+    shared = auto_field('shared_with', dump_only=True)
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)
 
 
-list_schema = ListSchema(exclude=['updated'])
-lists_schema = ListSchema(exclude=['updated'], many=True)
+list_schema = ListSchema(exclude=['updated', 'created', 'users', 'user_id', 'shared_with'])
+lists_schema = ListSchema(exclude=['updated', 'created', 'users', 'user_id', 'shared_with'], many=True)
 
 
 class AdminListSchema(SQLAlchemyAutoSchema):
