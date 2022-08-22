@@ -150,18 +150,18 @@ user_schema = UserSchema(
     ]
 )
 
-short_users_schema = UserSchema(
-    exclude=[
-        'password_hash',
-        'locale',
-        'created',
-        'updated',
-        'last_login',
-        'access_code',
-        'session_id',
-        'is_activated',
-        'is_deleted',
-        'is_admin',
-    ],
-    many=True,
-)
+short_user_excludes = [
+    'password_hash',
+    'locale',
+    'created',
+    'updated',
+    'last_login',
+    'access_code',
+    'session_id',
+    'is_activated',
+    'is_deleted',
+    'is_admin',
+]
+
+short_user_schema = UserSchema(exclude=short_user_excludes)
+short_users_schema = UserSchema(exclude=short_user_excludes, many=True)

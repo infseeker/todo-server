@@ -450,10 +450,11 @@ def login():
 
                     response = {
                         'message': f"You are logged in",
+                        'id': user.id,
+                        'username': user.username,
                         'email': user.email,
                         'image': user.image,
                         'locale': user.locale,
-                        'username': user.username,
                         'admin': user.is_admin,
                         'code': 200,
                     }
@@ -463,22 +464,23 @@ def login():
                     return jsonify(response), 400
             else:
                 response = {
-                    'message': f"Your account was deleted",
+                    'id': user.id,
                     'username': user.username,
                     'email': user.email,
                     'image': user.image,
                     'locale': user.locale,
                     'deleted': True,
                     'code': 403,
+                    'message': f"Your account was deleted",
                 }
                 return jsonify(response), 403
         else:
             response = {
-                'message': f"Your account is not activated",
-                'inactive': True,
                 'username': user.username,
                 'email': user.email,
+                'inactive': True,
                 'code': 403,
+                'message': f"Your account is not activated",
             }
             return jsonify(response), 403
 
@@ -501,6 +503,7 @@ def get_session():
         return jsonify(response), 401
 
     response = {
+        'id': user.id,
         'username': user.username,
         'email': user.email,
         'image': user.image,
@@ -515,23 +518,16 @@ def get_session():
 @app.route('/todo/api/user/image/<image>', methods=['GET'])
 @login_required
 def get_user_image(image):
-    if not current_user.image == image:
-        response = {
-            'message': f"Image for current user not found",
-            'code': 404,
-        }
-        return jsonify(response), 404
-
     image_folder = os.path.join(os.path.dirname(app.instance_path), app.config['USER_IMGS_PATH'])
 
     try:
-        return send_from_directory(image_folder, current_user.image)
+        return send_from_directory(image_folder, image)
     except:
         response = {
-            'message': f"Something went wrong",
-            'code': 400,
+            'message': f"Image {image} not found",
+            'code': 404,
         }
-        return jsonify(response), 400
+        return jsonify(response), 404
 
 
 @app.route('/todo/api/user/image', methods=['PUT'])

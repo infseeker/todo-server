@@ -19,12 +19,23 @@ from ..auth.basic import *
 def get_lists():
     user_lists_query = List.query.filter_by(user_id=current_user.id)
     shared_lists_query = List.query.filter(List.shared_with.any(User.id == current_user.id))
+    lists_query = user_lists_query.union(shared_lists_query)
 
-    lists = user_lists_query.union(shared_lists_query)
+    lists = list(
+        map(
+            lambda l: {
+                'id': l.id,
+                'title': l.title,
+                'owner': short_user_schema.dump(User.query.get(l.user_id)),
+                'shared': short_users_schema.dump(l.shared_with),
+            },
+            lists_query,
+        )
+    )
 
     response = {
         'message': f"Lists of current user",
-        'data': lists_schema.dump(lists),
+        'data': lists,
         'code': 200,
     }
     return jsonify(response), 200
@@ -164,6 +175,26 @@ def delete_list(list_id):
     return jsonify(response), 200
 
 
+@app.route('/todo/api/lists/<int:list_id>/share', methods=['PUT'])
+@login_required
+def share_list(list_id):
+    response = {
+        'message': f"List #{list_id} has been shared",
+        'code': 200,
+    }
+    return jsonify(response), 200
+
+
+@app.route('/todo/api/lists/<int:list_id>/share', methods=['DELETE'])
+@login_required
+def unshare_list(list_id):
+    response = {
+        'message': f"List #{list_id} has been unshared",
+        'code': 200,
+    }
+    return jsonify(response), 200
+
+
 # check user session for websocket
 def auth_required(f):
     @functools.wraps(f)
@@ -200,20 +231,12 @@ def get_list(list_id):
         return jsonify(response), 404
 
     list_items = ListItem.query.filter(ListItem.list_id == list_id)
-    list_owner = User.query.get(list.user_id)
 
     response = {
-        'message': f"List items for list #{list.id}",
-        'owner': {
-            'id': list.user_id,
-            'username': list_owner.username,
-            'email': list_owner.email,
-            'image': list_owner.image,
-        },
-        'shared': short_users_schema.dump(list.shared_with),
         'list_id': list.id,
         'data': list_items_schema.dump(list_items),
         'code': 200,
+        'message': f"List items for list #{list.id}",
     }
     return jsonify(response), 200
 
