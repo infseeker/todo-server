@@ -90,9 +90,12 @@ def create_list():
 
         success, message = ListItem.createAll(items)
 
+    list = list_schema.dump(list)
+    list['owner'] = short_user_schema.dump(User.query.get(current_user.id))
+
     response = {
         'message': f"List has been created",
-        'data': list_schema.dump(list),
+        'data': list,
         'code': 200,
     }
     return jsonify(response), 200
