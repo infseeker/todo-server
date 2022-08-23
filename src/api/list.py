@@ -178,8 +178,64 @@ def delete_list(list_id):
 @app.route('/todo/api/lists/<int:list_id>/share', methods=['PUT'])
 @login_required
 def share_list(list_id):
+    data = request.json
+    email = data['email']
+    list = List.query.get(list_id)
+
+    if not list or list.user_id != current_user.id:
+        response = {
+            'message': f"List #{list_id} was not found",
+            'code': 404,
+        }
+        return jsonify(response), 404
+
+    if not email or not email.strip():
+        response = {
+            'message': f"User email field must not be empty",
+            'code': 400,
+        }
+        return jsonify(response), 400
+
+    email = email.strip()
+
+    for u in list.shared_with:
+        if u.email == email:
+            response = {
+                'message': f"List #{list.id} already shared with {email}",
+                'code': 409,
+            }
+            return jsonify(response), 409
+
+    user = User.get_user_by_email(email)
+
+    if not user or not user.is_activated or user.is_deleted:
+        response = {
+            'message': f"User with email {email} was not found",
+            'code': 404,
+        }
+        return jsonify(response), 404
+
+    try:
+        list.shared_with.append(user)
+    except:
+        response = {
+            'message': f"Something went wrong",
+            'code': 400,
+        }
+        return jsonify(response), 400
+
+    success, message = list.update()
+
+    if not success:
+        response = {
+            'message': message,
+            'code': 400,
+        }
+        return jsonify(response), 400
+
     response = {
-        'message': f"List #{list_id} has been shared",
+        'data': short_user_schema.dump(user),
+        'message': f"List #{list.id} has been shared with user {user.email}",
         'code': 200,
     }
     return jsonify(response), 200
