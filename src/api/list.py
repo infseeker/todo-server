@@ -4,7 +4,7 @@ from flask import request, jsonify
 from sqlalchemy import or_
 from marshmallow import ValidationError
 from flask_login import current_user, login_required
-from flask_socketio import disconnect
+from flask_socketio import send, emit, disconnect
 from werkzeug.exceptions import *
 
 from app import app, db, socketio
@@ -207,7 +207,6 @@ def share_list(list_id):
             'code': 409,
         }
         return jsonify(response), 409
-    
 
     for u in list.shared_with:
         if u.email == email:
@@ -285,7 +284,7 @@ def unshare_list(list_id):
             'code': 404,
         }
         return jsonify(response), 404
-    
+
     try:
         list.shared_with.remove(unshared_user)
     except:
@@ -293,8 +292,8 @@ def unshare_list(list_id):
             'message': f"Something went wrong",
             'code': 400,
         }
-        return jsonify(response), 400    
-        
+        return jsonify(response), 400
+
     success, message = list.update()
 
     if not success:
@@ -323,12 +322,27 @@ def auth_required(f):
     return wrapped
 
 
-@socketio.on('check')
+@socketio.on('user_connect')
 @auth_required
-def handle_my_custom_event(data):
-    socketio.emit(
-        'my response', {'message': '{0} has joined'.format(current_user.username)}, broadcast=True
-    )
+def user_connect(data):
+    response = {
+        'data': data,
+        'message': f'{current_user.username} has joined',
+        'code': 200,
+    }
+    socketio.emit('my response', response)
+
+
+@socketio.on('user_disconnect')
+@auth_required
+def user_disconnect(data):
+    response = {
+        'data': data,
+        'message': f'{current_user.username} has unjoined',
+        'code': 200,
+    }
+    socketio.emit('my response', response)
+    disconnect()
 
 
 @app.route('/todo/api/lists/<int:list_id>', methods=['GET'])
