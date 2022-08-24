@@ -201,6 +201,14 @@ def share_list(list_id):
 
     email = email.strip()
 
+    if current_user.email == email:
+        response = {
+            'message': f"List #{list.id} has owned by {email}",
+            'code': 409,
+        }
+        return jsonify(response), 409
+    
+
     for u in list.shared_with:
         if u.email == email:
             response = {
@@ -247,8 +255,57 @@ def share_list(list_id):
 @app.route('/todo/api/lists/<int:list_id>/share', methods=['DELETE'])
 @login_required
 def unshare_list(list_id):
+    data = request.json
+    email = data['email']
+    list = List.query.get(list_id)
+
+    if not list:
+        response = {
+            'message': f"List #{list_id} was not found",
+            'code': 404,
+        }
+        return jsonify(response), 404
+
+    if not email or not email.strip():
+        response = {
+            'message': f"User email field must not be empty",
+            'code': 400,
+        }
+        return jsonify(response), 400
+
+    unshared_user = None
+
+    for shared_user in list.shared_with:
+        if shared_user.email == email:
+            unshared_user = shared_user
+
+    if not current_user.id == list.user_id and not current_user == unshared_user:
+        response = {
+            'message': f"Can't unshare list #{list.id} with {email}, user not found",
+            'code': 404,
+        }
+        return jsonify(response), 404
+    
+    try:
+        list.shared_with.remove(unshared_user)
+    except:
+        response = {
+            'message': f"Something went wrong",
+            'code': 400,
+        }
+        return jsonify(response), 400    
+        
+    success, message = list.update()
+
+    if not success:
+        response = {
+            'message': message,
+            'code': 400,
+        }
+        return jsonify(response), 400
+
     response = {
-        'message': f"List #{list_id} has been unshared",
+        'message': f"List #{list.id} has been unshared with {unshared_user.email}",
         'code': 200,
     }
     return jsonify(response), 200
