@@ -4,7 +4,7 @@ from flask import request, jsonify
 from sqlalchemy import or_
 from marshmallow import ValidationError
 from flask_login import current_user, login_required
-from flask_socketio import send, emit, disconnect
+from flask_socketio import disconnect, join_room
 from werkzeug.exceptions import *
 
 from app import app, db, socketio
@@ -272,8 +272,8 @@ def unshare_list(list_id):
         }
         return jsonify(response), 400
 
-    unshared_user = None
     email = email.strip().lower()
+    unshared_user = None
 
     for shared_user in list.shared_with:
         if shared_user.email == email:
@@ -323,17 +323,34 @@ def auth_required(f):
     return wrapped
 
 
-@socketio.on('user_connect')
+@socketio.on('connect')
 @auth_required
 def user_connect(data):
-    list_owner_id = data['data']['owner']['id']
-    if current_user.id == list_owner_id:
-        response = {
-            'data': data,
-            'message': f'{current_user.email} has joined',
-            'code': 200,
-        }
-        socketio.emit('my response', response)
+    list_id = data['list_id']
+    list = List.query.get(list_id)
+
+    if not list:
+        disconnect()
+        return
+
+    list_shared_user = None
+    for shared_user in list.shared_with:
+        if shared_user.id == current_user.id:
+            list_shared_user = current_user
+
+    if not current_user.id == list.user_id and not list_shared_user:
+        disconnect()
+        return
+
+    room = list.id
+    join_room(room)
+
+    response = {
+        'room': room,
+        'message': f'{current_user.email} has joined',
+        'code': 200,
+    }
+    socketio.emit('connected', response, to=room);
 
 
 @socketio.on('user_disconnect')
@@ -344,19 +361,21 @@ def user_disconnect(data):
         'message': f'{current_user.email} has unjoined',
         'code': 200,
     }
-    socketio.emit('my response', response)
+    socketio.emit('disconnected', response)
     disconnect()
-    
-    
+
+
 @socketio.on('list_title_rename')
 @auth_required
 def list_title_rename(data):
+    list_id = data['list_id']
     response = {
         'data': data,
         'message': f'List owner has changed list title',
         'code': 200,
     }
-    socketio.emit('list_title_renaming', response)
+    socketio.emit('list_title_renamed', response, to=list_id)
+
 
 @app.route('/todo/api/lists/<int:list_id>', methods=['GET'])
 @login_required
