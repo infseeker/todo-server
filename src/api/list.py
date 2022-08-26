@@ -199,7 +199,7 @@ def share_list(list_id):
         }
         return jsonify(response), 400
 
-    email = email.strip()
+    email = email.strip().lower()
 
     if current_user.email == email:
         response = {
@@ -273,6 +273,7 @@ def unshare_list(list_id):
         return jsonify(response), 400
 
     unshared_user = None
+    email = email.strip().lower()
 
     for shared_user in list.shared_with:
         if shared_user.email == email:
@@ -325,12 +326,14 @@ def auth_required(f):
 @socketio.on('user_connect')
 @auth_required
 def user_connect(data):
-    response = {
-        'data': data,
-        'message': f'{current_user.username} has joined',
-        'code': 200,
-    }
-    socketio.emit('my response', response)
+    list_owner_id = data['data']['owner']['id']
+    if current_user.id == list_owner_id:
+        response = {
+            'data': data,
+            'message': f'{current_user.email} has joined',
+            'code': 200,
+        }
+        socketio.emit('my response', response)
 
 
 @socketio.on('user_disconnect')
@@ -338,12 +341,22 @@ def user_connect(data):
 def user_disconnect(data):
     response = {
         'data': data,
-        'message': f'{current_user.username} has unjoined',
+        'message': f'{current_user.email} has unjoined',
         'code': 200,
     }
     socketio.emit('my response', response)
     disconnect()
-
+    
+    
+@socketio.on('list_title_rename')
+@auth_required
+def list_title_rename(data):
+    response = {
+        'data': data,
+        'message': f'List owner has changed list title',
+        'code': 200,
+    }
+    socketio.emit('list_title_renaming', response)
 
 @app.route('/todo/api/lists/<int:list_id>', methods=['GET'])
 @login_required
