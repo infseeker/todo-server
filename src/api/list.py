@@ -4,7 +4,7 @@ from flask import request, jsonify
 from sqlalchemy import or_
 from marshmallow import ValidationError
 from flask_login import current_user, login_required
-from flask_socketio import disconnect, join_room
+from flask_socketio import disconnect, join_room, rooms
 from werkzeug.exceptions import *
 
 from app import app, db, socketio
@@ -346,6 +346,7 @@ def user_connect(data):
     join_room(room)
 
     response = {
+        'data': short_user_schema.dump(current_user),
         'room': room,
         'message': f'{current_user.email} has joined',
         'code': 200,
@@ -357,7 +358,7 @@ def user_connect(data):
 @auth_required
 def user_disconnect(data):
     response = {
-        'data': data,
+        'data': short_user_schema.dump(current_user),
         'message': f'{current_user.email} has unjoined',
         'code': 200,
     }
