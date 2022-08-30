@@ -311,73 +311,6 @@ def unshare_list(list_id):
     return jsonify(response), 200
 
 
-# check user session for websocket
-def auth_required(f):
-    @functools.wraps(f)
-    def wrapped(*args, **kwargs):
-        if not current_user.is_authenticated:
-            disconnect()
-        else:
-            return f(*args, **kwargs)
-
-    return wrapped
-
-
-@socketio.on('connect')
-@auth_required
-def user_connect(data):
-    list_id = data['list_id']
-    list = List.query.get(list_id)
-
-    if not list:
-        disconnect()
-        return
-
-    list_shared_user = None
-    for shared_user in list.shared_with:
-        if shared_user.id == current_user.id:
-            list_shared_user = current_user
-
-    if not current_user.id == list.user_id and not list_shared_user:
-        disconnect()
-        return
-
-    room = list.id
-    join_room(room)
-
-    response = {
-        'data': short_user_schema.dump(current_user),
-        'room': room,
-        'message': f'{current_user.email} has joined',
-        'code': 200,
-    }
-    socketio.emit('connected', response, to=room);
-
-
-@socketio.on('user_disconnect')
-@auth_required
-def user_disconnect(data):
-    response = {
-        'data': short_user_schema.dump(current_user),
-        'message': f'{current_user.email} has unjoined',
-        'code': 200,
-    }
-    socketio.emit('disconnected', response)
-    disconnect()
-
-
-@socketio.on('list_title_rename')
-@auth_required
-def list_title_rename(data):
-    list_id = data['list_id']
-    response = {
-        'data': data,
-        'message': f'List owner has changed list title',
-        'code': 200,
-    }
-    socketio.emit('list_title_renamed', response, to=list_id)
-
-
 @app.route('/todo/api/lists/<int:list_id>', methods=['GET'])
 @login_required
 def get_list(list_id):
@@ -408,9 +341,15 @@ def get_list(list_id):
 @login_required
 def create_list_item(list_id):
     data = request.json
-    list = List.query.filter((List.id == list_id) & (List.user_id == current_user.id)).first()
+    list = List.query.filter(List.id == list_id).first()
+    user = current_user if current_user.id == list.user_id else None
 
-    if not list:
+    if not user:
+        for shared_user in list.shared_with:
+            if shared_user.id == current_user.id:
+                user = current_user
+
+    if not list and not user:
         response = {
             'message': f"List not found",
             'code': 404,
@@ -455,19 +394,23 @@ def create_list_item(list_id):
 @login_required
 def update_list_item(list_id, list_item_id):
     data = request.json
-    list = List.query.filter((List.id == list_id) & (List.user_id == current_user.id)).first()
-    list_item = ListItem.query.filter(
-        (ListItem.list_id == list_id) & (ListItem.id == list_item_id)
-    ).first()
+    list = List.query.filter_by(id=list_id).first()
+    list_item = ListItem.query.filter_by(list_id=list_id, id=list_item_id).first()
+    user = current_user if current_user.id == list.user_id else None
 
-    if not list:
+    if not user:
+        for shared_user in list.shared_with:
+            if shared_user.id == current_user.id:
+                user = current_user
+
+    if not list and not user:
         response = {
             'message': f"List not found",
             'code': 404,
         }
         return jsonify(response), 404
 
-    if not list_item:
+    if not list_item and not user:
         response = {
             'message': f"List item not found",
             'code': 404,
@@ -512,19 +455,23 @@ def update_list_item(list_id, list_item_id):
 @app.route('/todo/api/lists/<int:list_id>/<int:list_item_id>', methods=['DELETE'])
 @login_required
 def delete_list_item(list_id, list_item_id):
-    list = List.query.filter((List.id == list_id) & (List.user_id == current_user.id)).first()
-    list_item = ListItem.query.filter(
-        (ListItem.list_id == list_id) & (ListItem.id == list_item_id)
-    ).first()
+    list = List.query.filter_by(id=list_id).first()
+    list_item = ListItem.query.filter_by(list_id=list_id, id=list_item_id).first()
+    user = current_user if current_user.id == list.user_id else None
 
-    if not list:
+    if not user:
+        for shared_user in list.shared_with:
+            if shared_user.id == current_user.id:
+                user = current_user
+
+    if not list and not user:
         response = {
             'message': f"List not found",
             'code': 404,
         }
         return jsonify(response), 404
 
-    if not list_item:
+    if not list_item and not user:
         response = {
             'message': f"List item not found",
             'code': 404,
@@ -546,3 +493,155 @@ def delete_list_item(list_id, list_item_id):
         'code': 200,
     }
     return jsonify(response), 200
+
+
+# check user session for websocket
+def auth_required(f):
+    @functools.wraps(f)
+    def wrapped(*args, **kwargs):
+        if not current_user.is_authenticated:
+            disconnect()
+        else:
+            return f(*args, **kwargs)
+
+    return wrapped
+
+
+@socketio.on('connect')
+@auth_required
+def user_connect(data):
+    list_id = data['list_id']
+    list = List.query.get(list_id)
+
+    if not list:
+        disconnect()
+        return
+
+    list_shared_user = None
+    for shared_user in list.shared_with:
+        if shared_user.id == current_user.id:
+            list_shared_user = current_user
+
+    if not current_user.id == list.user_id and not list_shared_user:
+        disconnect()
+        return
+
+    room = list.id
+    join_room(room)
+
+    response = {
+        'data': short_user_schema.dump(current_user),
+        'room': room,
+        'message': f'{current_user.email} has joined',
+        'code': 200,
+    }
+    socketio.emit('connected', response, to=room)
+
+
+@socketio.on('user_disconnect')
+@auth_required
+def user_disconnect(data):
+    response = {
+        'data': short_user_schema.dump(current_user),
+        'message': f'{current_user.email} has unjoined',
+        'code': 200,
+    }
+    socketio.emit('disconnected', response)
+    disconnect()
+
+
+@socketio.on('list_title_rename')
+@auth_required
+def list_title_rename(data):
+    list_id = data['list_id']
+    response = {
+        'data': data,
+        'user': short_user_schema.dump(current_user),
+        'message': f'List owner has changed list title',
+        'code': 200,
+    }
+    socketio.emit('list_title_renamed', response, to=list_id)
+
+
+@socketio.on('create_list_item')
+@auth_required
+def create_list_item(data):
+    list_id = data['list_id']
+
+    response = {
+        'data': data,
+        'user': short_user_schema.dump(current_user),
+        'message': f'Add list item',
+        'code': 200,
+    }
+    socketio.emit('list_item_created', response, to=list_id)
+
+
+@socketio.on('edit_list_item_title')
+@auth_required
+def edit_list_item_title(data):
+    list_id = data['list_id']
+
+    response = {
+        'data': data,
+        'user': short_user_schema.dump(current_user),
+        'message': f'Edit list item title',
+        'code': 200,
+    }
+    socketio.emit('list_item_title_edited', response, to=list_id)
+
+
+@socketio.on('check_list_item')
+@auth_required
+def edit_list_item_title(data):
+    list_id = data['list_id']
+
+    response = {
+        'data': data,
+        'user': short_user_schema.dump(current_user),
+        'message': f'Check list item',
+        'code': 200,
+    }
+    socketio.emit('list_item_checked', response, to=list_id)
+
+
+@socketio.on('like_list_item')
+@auth_required
+def edit_list_item_title(data):
+    list_id = data['list_id']
+
+    response = {
+        'data': data,
+        'user': short_user_schema.dump(current_user),
+        'message': f'Like list item',
+        'code': 200,
+    }
+    socketio.emit('list_item_liked', response, to=list_id)
+
+
+@socketio.on('range_list_item')
+@auth_required
+def edit_list_item_title(data):
+    list_id = data['list_id']
+
+    response = {
+        'data': data,
+        'user': short_user_schema.dump(current_user),
+        'message': f'Like list item',
+        'code': 200,
+    }
+    socketio.emit('list_item_ranged', response, to=list_id)
+
+
+@socketio.on('delete_list_item')
+@auth_required
+def edit_list_item_title(data):
+    list_id = data['list_id']
+
+    response = {
+        'data': data,
+        'user': short_user_schema.dump(current_user),
+        'message': f'Delete list item',
+        'code': 200,
+    }
+    socketio.emit('list_item_deleted', response, to=list_id)
