@@ -305,6 +305,7 @@ def unshare_list(list_id):
         return jsonify(response), 400
 
     response = {
+        'data': short_user_schema.dump(unshared_user),
         'message': f"List #{list.id} has been unshared with {unshared_user.email}",
         'code': 200,
     }
@@ -593,7 +594,7 @@ def edit_list_item_title(data):
 
 @socketio.on('check_list_item')
 @auth_required
-def edit_list_item_title(data):
+def check_list_item(data):
     list_id = data['list_id']
 
     response = {
@@ -607,7 +608,7 @@ def edit_list_item_title(data):
 
 @socketio.on('like_list_item')
 @auth_required
-def edit_list_item_title(data):
+def like_list_item(data):
     list_id = data['list_id']
 
     response = {
@@ -621,7 +622,7 @@ def edit_list_item_title(data):
 
 @socketio.on('range_list_item')
 @auth_required
-def edit_list_item_title(data):
+def range_list_item(data):
     list_id = data['list_id']
 
     response = {
@@ -635,7 +636,7 @@ def edit_list_item_title(data):
 
 @socketio.on('delete_list_item')
 @auth_required
-def edit_list_item_title(data):
+def delete_list_item(data):
     list_id = data['list_id']
 
     response = {
@@ -645,3 +646,45 @@ def edit_list_item_title(data):
         'code': 200,
     }
     socketio.emit('list_item_deleted', response, to=list_id)
+
+
+@socketio.on('share_list')
+@auth_required
+def delete_list(data):
+    list_id = data['list_id']
+
+    response = {
+        'data': data['data'],
+        'user': short_user_schema.dump(current_user),
+        'message': f'Delete list',
+        'code': 200,
+    }
+    socketio.emit('list_shared', response, to=list_id)
+
+
+@socketio.on('unshare_list')
+@auth_required
+def delete_list(data):
+    list_id = data['list_id']
+
+    response = {
+        'data': data['data'],
+        'user': short_user_schema.dump(current_user),
+        'message': f'Delete list',
+        'code': 200,
+    }
+    socketio.emit('list_unshared', response, to=list_id)
+
+
+@socketio.on('delete_list')
+@auth_required
+def delete_list(data):
+    list_id = data['list_id']
+
+    response = {
+        'data': data,
+        'user': short_user_schema.dump(current_user),
+        'message': f'Delete list',
+        'code': 200,
+    }
+    socketio.emit('list_deleted', response, to=list_id)
