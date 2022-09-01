@@ -418,6 +418,27 @@ def update_list_item(list_id, list_item_id):
         }
         return jsonify(response), 404
 
+    # ranging
+    previous_list_item_id = data['previous_list_item_id']
+    if previous_list_item_id or previous_list_item_id == 0:
+        if previous_list_item_id == 0:
+            next_list_item = ListItem.query.order_by(ListItem.position.asc()).first()
+            if next_list_item and next_list_item.position:
+                next_list_item.position
+                data['position'] = next_list_item.position / 2
+        else:
+            previous_list_item = ListItem.query.get(previous_list_item_id)
+            if previous_list_item:
+                next_list_item = (
+                    ListItem.query.order_by(ListItem.position.asc())
+                    .filter(ListItem.position > previous_list_item.position)
+                    .first()
+                )
+                if next_list_item:
+                    data['position'] = (previous_list_item.position + next_list_item.position) / 2
+                else:
+                    data['position'] = previous_list_item.position + 1
+
     try:
         list = list_item_schema.load(data, instance=list_item, session=db.session)
     except (ValidationError, TypeError):
