@@ -554,7 +554,7 @@ def user_connect(data):
     response = {
         'data': short_user_schema.dump(current_user),
         'room': room,
-        'message': f'{current_user.email} has joined',
+        'message': f'{current_user.email} has connected',
         'code': 200,
     }
     socketio.emit('connected', response, to=room)
@@ -565,7 +565,7 @@ def user_connect(data):
 def user_disconnect(data):
     response = {
         'data': short_user_schema.dump(current_user),
-        'message': f'{current_user.email} has unjoined',
+        'message': f'{current_user.email} has disconnected',
         'code': 200,
     }
     socketio.emit('disconnected', response)
@@ -649,7 +649,7 @@ def range_list_item(data):
     response = {
         'data': data,
         'user': short_user_schema.dump(current_user),
-        'message': f'Like list item',
+        'message': f'Range list item',
         'code': 200,
     }
     socketio.emit('list_item_ranged', response, to=list_id)
@@ -677,7 +677,7 @@ def delete_list(data):
     response = {
         'data': data['data'],
         'user': short_user_schema.dump(current_user),
-        'message': f'Delete list',
+        'message': f'List has shared',
         'code': 200,
     }
     socketio.emit('list_shared', response, to=list_id)
@@ -691,7 +691,7 @@ def delete_list(data):
     response = {
         'data': data['data'],
         'user': short_user_schema.dump(current_user),
-        'message': f'Delete list',
+        'message': f'List has unshared',
         'code': 200,
     }
     socketio.emit('list_unshared', response, to=list_id)
