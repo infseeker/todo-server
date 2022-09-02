@@ -373,9 +373,15 @@ def create_list_item(list_id):
         }
         return jsonify(response), 400
 
-    list_item.list_id = list_id
+    list_item.list_id = list.id
+
+    last_list_item = (
+        ListItem.query.filter_by(list_id=list.id).order_by(ListItem.position.desc()).first()
+    )
+    list_item.position = last_list_item.position + 1 if last_list_item else 1
 
     success, message = list_item.create()
+    
     if not success:
         response = {
             'message': message,
@@ -418,29 +424,8 @@ def update_list_item(list_id, list_item_id):
         }
         return jsonify(response), 404
 
-    # ranging
-    previous_list_item_id = data['previous_list_item_id']
-    if previous_list_item_id or previous_list_item_id == 0:
-        if previous_list_item_id == 0:
-            next_list_item = ListItem.query.order_by(ListItem.position.asc()).first()
-            if next_list_item and next_list_item.position:
-                next_list_item.position
-                data['position'] = next_list_item.position / 2
-        else:
-            previous_list_item = ListItem.query.get(previous_list_item_id)
-            if previous_list_item:
-                next_list_item = (
-                    ListItem.query.order_by(ListItem.position.asc())
-                    .filter(ListItem.position > previous_list_item.position)
-                    .first()
-                )
-                if next_list_item:
-                    data['position'] = (previous_list_item.position + next_list_item.position) / 2
-                else:
-                    data['position'] = previous_list_item.position + 1
-
     try:
-        list = list_item_schema.load(data, instance=list_item, session=db.session)
+        list_item = list_item_schema.load(data, instance=list_item, session=db.session)
     except (ValidationError, TypeError):
         response = {
             'message': f"List updating validation error, check your data",
@@ -457,6 +442,11 @@ def update_list_item(list_id, list_item_id):
 
     list_item.title = list_item.title.strip()
 
+    # list item ranging
+    previous_list_item_id = data['previous_list_item_id']
+    if previous_list_item_id or previous_list_item_id == 0:
+        list_item.position = setListItemPosition(list, previous_list_item_id)
+
     success, message = list_item.update()
 
     if not success:
@@ -468,7 +458,7 @@ def update_list_item(list_id, list_item_id):
 
     response = {
         'message': f"List item #{list_item.id} of list #{list.id} has been updated",
-        'data': list_item_schema.dump(list),
+        'data': list_item_schema.dump(list_item),
         'code': 200,
     }
     return jsonify(response), 200
@@ -709,3 +699,28 @@ def delete_list(data):
         'code': 200,
     }
     socketio.emit('list_deleted', response, to=list_id)
+
+
+def setListItemPosition(list, previous_list_item_id):
+    if previous_list_item_id == 0:
+        next_list_item = (
+            ListItem.query.filter_by(list_id=list.id).order_by(ListItem.position.asc()).first()
+        )
+        if next_list_item and next_list_item.position:
+            next_list_item.position
+            return next_list_item.position / 2
+    else:
+        previous_list_item = ListItem.query.filter_by(
+            id=previous_list_item_id, list_id=list.id
+        ).first()
+        if previous_list_item:
+            next_list_item = (
+                ListItem.query.filter_by(list_id=list.id)
+                .order_by(ListItem.position.asc())
+                .filter(ListItem.position > previous_list_item.position)
+                .first()
+            )
+            if next_list_item:
+                return (previous_list_item.position + next_list_item.position) / 2
+            else:
+                return previous_list_item.position + 1
