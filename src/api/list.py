@@ -331,6 +331,12 @@ def get_list(list_id):
 
     response = {
         'list_id': list.id,
+        'list': {
+            'id': list.id,
+            'title': list.title,
+            'owner': short_user_schema.dump(User.query.get(list.user_id)),
+            'shared': short_users_schema.dump(list.shared_with),
+        },
         'data': list_items_schema.dump(list_items),
         'code': 200,
         'message': f"List items for list #{list.id}",
@@ -381,7 +387,7 @@ def create_list_item(list_id):
     list_item.position = last_list_item.position + 1 if last_list_item else 1
 
     success, message = list_item.create()
-    
+
     if not success:
         response = {
             'message': message,
