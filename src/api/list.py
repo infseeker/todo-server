@@ -218,7 +218,7 @@ def share_list(list_id):
 
     user = User.get_user_by_email(email)
 
-    if not user or not user.is_activated or user.is_deleted:
+    if not user or not user.activated or user.deleted:
         response = {
             'message': f"User with email {email} was not found",
             'code': 404,

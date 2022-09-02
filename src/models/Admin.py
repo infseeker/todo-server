@@ -22,7 +22,7 @@ app.config['FLASK_ADMIN_SWATCH'] = 'united'
 
 class MyAdminIndexView(AdminIndexView):
     def is_accessible(self):
-        return current_user.is_authenticated and current_user.is_admin
+        return current_user.is_authenticated and current_user.admin
 
     def inaccessible_callback(self, name, **kwargs):
         return redirect('/login')
@@ -39,7 +39,7 @@ class DefaultModelView(ModelView):
     extra_css = ['/todo/api/admin/static/admin.css']
 
     def is_accessible(self):
-        return current_user.is_authenticated and current_user.is_admin
+        return current_user.is_authenticated and current_user.admin
 
     def inaccessible_callback(self, name, **kwargs):
         return redirect('/login')
@@ -62,9 +62,9 @@ class UserView(DefaultModelView):
         'image',
         'locale',
         'access_code',
-        'is_admin',
-        'is_deleted',
-        'is_activated',
+        'admin',
+        'deleted',
+        'activated',
         'created',
         'updated',
         'last_login',
@@ -76,9 +76,9 @@ class UserView(DefaultModelView):
         'image',
         'locale',
         'access_code',
-        'is_admin',
-        'is_deleted',
-        'is_activated',
+        'admin',
+        'deleted',
+        'activated',
         'created',
         'updated',
         'last_login',
@@ -87,18 +87,19 @@ class UserView(DefaultModelView):
         'username',
         'password_hash',
         'email',
-        'is_activated',
-        'is_deleted',
-        'is_admin',
+        'activated',
+        'deleted',
+        'admin',
     ]
     form_edit_rules = [
         'username',
         'email',
-        'is_activated',
-        'is_deleted',
-        'is_admin',
+        'activated',
+        'deleted',
+        'admin',
     ]
     column_labels = dict(password_hash='Password')
+
     column_searchable_list = ['username', 'email']
 
     def on_model_change(self, form, user, is_created):
@@ -107,8 +108,8 @@ class UserView(DefaultModelView):
             user.password_hash = generate_password_hash(form.password_hash.data)
 
         else:
-            if user.id == current_user.id and user.is_admin == False:
-                user.is_admin = True
+            if user.id == current_user.id and user.admin == False:
+                user.admin = True
                 flash("You can't take away admin permissions of yourself")
 
     def delete_model(self, user):

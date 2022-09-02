@@ -1,9 +1,10 @@
+import os
 import random
 import uuid
 
 from app import db
 from sqlalchemy import exc
-from marshmallow import EXCLUDE
+from marshmallow import EXCLUDE, fields
 from marshmallow_sqlalchemy import SQLAlchemyAutoSchema, auto_field
 from flask_login import UserMixin
 from werkzeug.security import generate_password_hash, check_password_hash
@@ -31,9 +32,9 @@ class User(db.Model, UserMixin):
     )
     last_login = db.Column(db.DateTime, nullable=False, server_default=db.func.now())
     access_code = db.Column(db.Integer, default=None)
-    is_activated = db.Column(db.Boolean, nullable=False, default=False)
-    is_deleted = db.Column(db.Boolean, nullable=False, default=False)
-    is_admin = db.Column(db.Boolean, nullable=False, default=False)
+    activated = db.Column(db.Boolean, nullable=False, default=False)
+    deleted = db.Column(db.Boolean, nullable=False, default=False)
+    admin = db.Column(db.Boolean, nullable=False, default=False)
 
     def __init__(
         self,
@@ -42,9 +43,9 @@ class User(db.Model, UserMixin):
         password_hash=None,
         image=None,
         locale=None,
-        is_activated=None,
-        is_deleted=None,
-        is_admin=None,
+        activated=None,
+        deleted=None,
+        admin=None,
     ):
         self.username = username
         self.email = db.func.lower(email)
@@ -53,9 +54,9 @@ class User(db.Model, UserMixin):
         self.locale = locale
         self.session_id = uuid.uuid4()
         self.access_code = (User.generate_access_code(),)
-        self.is_activated = is_activated
-        self.is_deleted = is_deleted
-        self.is_admin = is_admin
+        self.activated = activated
+        self.deleted = deleted
+        self.admin = admin
 
     def get_id(self):
         return str(self.session_id)
@@ -128,16 +129,22 @@ class UserSchema(SQLAlchemyAutoSchema):
     username = auto_field()
     email = auto_field()
     password = auto_field('password_hash', load_only=True)
-    image = auto_field()
+    image = fields.Method('get_image_url')
     locale = auto_field()
     session_id = auto_field(dump_only=True)
     access_code = auto_field(dump_only=True)
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)
     last_login = auto_field(dump_only=True)
-    is_activated = auto_field(dump_only=True)
-    is_deleted = auto_field(dump_only=True)
-    is_admin = auto_field(dump_only=True)
+    activated = auto_field(dump_only=True)
+    deleted = auto_field(dump_only=True)
+    admin = auto_field(dump_only=True)
+
+    def get_image_url(self, user):
+        if user.image:
+            return f'{os.environ["USER_IMG_API_URL"]}/{user.image}'
+        else:
+            return None
 
 
 user_schema = UserSchema(
@@ -158,9 +165,9 @@ short_user_excludes = [
     'last_login',
     'access_code',
     'session_id',
-    'is_activated',
-    'is_deleted',
-    'is_admin',
+    'activated',
+    'deleted',
+    'admin',
 ]
 
 short_user_schema = UserSchema(exclude=short_user_excludes)

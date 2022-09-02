@@ -89,5 +89,5 @@ def on_identity_loaded(sender, identity):
     if not isinstance(identity, AnonymousIdentity):
         identity.provides.add(UserNeed(identity.id))
 
-        if current_user.is_admin:
+        if current_user.admin:
             identity.provides.add(RoleNeed('admin'))

@@ -154,7 +154,7 @@ def register():
         @scheduler.task('interval', id=f'delete_user_{user.id}_from_db', minutes=15)
         def delete_user_from_db():
             db_user = User.query.get(user.id)
-            if db_user and not db_user.is_activated:
+            if db_user and not db_user.activated:
                 db_user.delete()
             scheduler.remove_job(f'delete_user_{user.id}_from_db')
 
@@ -196,10 +196,10 @@ def activate():
     user = User.get_user_by_email(email)
 
     if user:
-        if not user.is_activated:
+        if not user.activated:
             if access_code and pattern.match(str(access_code)):
                 if user.access_code and user.access_code == int(access_code):
-                    user.is_activated = True
+                    user.activated = True
                     user.access_code = None
 
                     success, message = user.update()
@@ -239,31 +239,6 @@ def activate():
         return jsonify(response), 404
 
 
-@app.route('/todo/api/user/is-activated', methods=['GET'])
-def is_activated():
-    email = request.json.get('email')
-    user = User.get_user_by_email(email)
-
-    if user:
-        if user.is_activated:
-            response = {
-                'message': f"User with email {user.email} is activated",
-                'access_code': user.access_code,
-                'code': 200,
-            }
-            return jsonify(response), 200
-        else:
-            response = {
-                'message': f"User with email {user.email} is NOT activated",
-                'access_code': user.access_code,
-                'code': 403,
-            }
-            return jsonify(response), 403
-
-    response = {'message': f"User with email {email} is not found'", 'code': 404}
-    return jsonify(response), 404
-
-
 @app.route('/todo/api/user/restore-email', methods=['POST'])
 def generate_restoration_email():
     data = request.json
@@ -293,7 +268,7 @@ def generate_restoration_email():
         }
         return jsonify(response), 404
 
-    if not user.is_activated:
+    if not user.activated:
         response = {
             'message': f"User with {email.lower()} is not activated",
             'code': 403,
@@ -321,7 +296,7 @@ def generate_restoration_email():
     def delete_access_code_from_db():
         db_user = User.query.get(user.id)
 
-        if db_user and db_user.is_activated:
+        if db_user and db_user.activated:
             db_user.access_code = None
             db_user.update()
 
@@ -370,7 +345,7 @@ def restore():
     user = User.get_user_by_email(email.strip())
 
     if user:
-        if user.is_activated:
+        if user.activated:
             if not check_password()[0].json['code'] == 200:
                 return check_password()
 
@@ -378,7 +353,7 @@ def restore():
                 if user.access_code and user.access_code == int(access_code):
                     user.access_code = None
                     user.password_hash = generate_password_hash(password)
-                    user.is_deleted = False
+                    user.deleted = False
 
                     success, message = user.update()
                     if success:
@@ -439,8 +414,8 @@ def login():
     ).first()
 
     if user and user.verify_password(password):
-        if user.is_activated:
-            if not user.is_deleted:
+        if user.activated:
+            if not user.deleted:
 
                 success, message = user.login()
 
@@ -449,14 +424,9 @@ def login():
                     session.permanent = True
 
                     response = {
-                        'message': f"You are logged in",
-                        'id': user.id,
-                        'username': user.username,
-                        'email': user.email,
-                        'image': user.image,
-                        'locale': user.locale,
-                        'admin': user.is_admin,
+                        'data': user_schema.dump(user),
                         'code': 200,
+                        'message': f"You are logged in",
                     }
                     return jsonify(response), 200
                 else:
@@ -464,21 +434,14 @@ def login():
                     return jsonify(response), 400
             else:
                 response = {
-                    'id': user.id,
-                    'username': user.username,
-                    'email': user.email,
-                    'image': user.image,
-                    'locale': user.locale,
-                    'deleted': True,
+                    'data': user_schema.dump(user),
                     'code': 403,
                     'message': f"Your account was deleted",
                 }
                 return jsonify(response), 403
         else:
             response = {
-                'username': user.username,
-                'email': user.email,
-                'inactive': True,
+                'data': user_schema.dump(user),
                 'code': 403,
                 'message': f"Your account is not activated",
             }
@@ -503,19 +466,14 @@ def get_session():
         return jsonify(response), 401
 
     response = {
-        'id': user.id,
-        'username': user.username,
-        'email': user.email,
-        'image': user.image,
-        'locale': user.locale,
-        'admin': True if user.is_admin else False,
+        'data': user_schema.dump(user),
         'message': f"You are logged in",
         'code': 200,
     }
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/image/<image>', methods=['GET'])
+@app.route(f'{os.environ["USER_IMG_API_URL"]}/<image>', methods=['GET'])
 @login_required
 def get_user_image(image):
     image_folder = os.path.join(os.path.dirname(app.instance_path), app.config['USER_IMGS_PATH'])
@@ -587,7 +545,7 @@ def change_user_image():
 
     response = {
         'message': f"Image for current user has been changed",
-        'data': f'{user.image}',
+        'data': f'{os.environ["USER_IMG_API_URL"]}/{user.image}',
         'code': 200,
     }
     return jsonify(response), 200
@@ -725,9 +683,9 @@ def delete():
         return jsonify(response), 400
 
     if user and user.verify_password(password):
-        if not user.is_deleted:
+        if not user.deleted:
             logout_user()
-            user.is_deleted = True
+            user.deleted = True
             user.session_id = uuid.uuid4()
 
             success, message = user.update()
@@ -755,7 +713,7 @@ def delete():
 
 def send_email_with_access_code(user):
     with app.app_context():
-        if not user.is_activated:
+        if not user.activated:
             msg = Message(
                 subject="ToDo: Пользователь зарегистрирован",
                 sender=app.config.get("MAIL_USERNAME"),
