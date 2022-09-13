@@ -6,11 +6,11 @@ Client side: [todo-client](https://github.com/infseeker/todo-client) <br />
 Live demo: [infseeker-todo.tk](https://infseeker-todo.tk/)
 
 
-## Tech Stack
- - **API:** Flask
- - **Database:** PostgreSQL
- - **Web-server:** Gunicort + Nginx
- - **ORM:** Flask-SQLAlchemy + Flask Marshmallow
+## Backend Tech Stack
+- **Framework (API):** Flask
+- **Database:** PostgreSQL
+- **Web-server:** Gunicort + Nginx
+- **ORM:** Flask-SQLAlchemy + Flask Marshmallow
 - **Authentication:** Flask Login
 - **Authorization:** Flask Principal
 - **SMTP-interface:** Flask Mail
@@ -26,4 +26,4 @@ Live demo: [infseeker-todo.tk](https://infseeker-todo.tk/)
 - Multiple list creation
 - List sharing
 - Real time shared list editing (WebSocket)
-- Administration (with Flask Admin)
+- Administration (Flask Admin)
