@@ -90,7 +90,9 @@ class ListItemSchema(SQLAlchemyAutoSchema):
     position = auto_field()
     created = auto_field(dump_only=True)
     updated = auto_field(dump_only=True)
+    # For temp api
+    completed = auto_field('is_done')
 
 
-list_item_schema = ListItemSchema(exclude=['updated'])
-list_items_schema = ListItemSchema(exclude=['updated'], many=True)
+list_item_schema = ListItemSchema(exclude=['updated', 'completed'])
+list_items_schema = ListItemSchema(exclude=['updated', 'completed'], many=True)

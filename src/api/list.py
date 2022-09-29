@@ -738,8 +738,8 @@ app.config['WTF_CSRF_ENABLED'] = False
 REACT_USER_NAME = 'ReactUser'
 react_user = User.query.filter_by(username=REACT_USER_NAME).first()
 
-list_item_short_schema = ListItemSchema(exclude=['list_id','updated','is_liked','position', 'created', 'lists'])
-list_items_short_schema = ListItemSchema(exclude=['list_id','updated','is_liked','position', 'created', 'lists'], many=True)
+list_item_short_schema = ListItemSchema(exclude=['list_id', 'is_done', 'updated','is_liked','position', 'created', 'lists'])
+list_items_short_schema = ListItemSchema(exclude=['list_id', 'is_done' ,'updated','is_liked','position', 'created', 'lists'], many=True)
 
 @app.route('/todo/api/react', methods=['GET'])
 def get_react_list_items():
@@ -750,7 +750,7 @@ def get_react_list_items():
     response = {
         'data': list_items_short_schema.dump(list_items),
         'code': 200,
-        'message': f"All list items",
+        'message': f"All ToDo items",
     }
     return jsonify(response), 200
 
@@ -771,7 +771,7 @@ def create_react_list_item():
 
     if not list_item.title or not list_item.title.strip():
         response = {
-            'message': f"List item title must not be empty",
+            'message': f"ToDo item title must not be empty",
             'code': 400,
         }
         return jsonify(response), 400
@@ -789,7 +789,7 @@ def create_react_list_item():
 
     response = {
         'data': list_item_short_schema.dump(list_item),
-        'message': f"List item created",
+        'message': f"ToDo item created",
         'code': 200,
     }
     return jsonify(response), 200
@@ -803,7 +803,7 @@ def update_react_list_item(list_item_id):
 
     if not list_item:
         response = {
-            'message': f"List item not found",
+            'message': f"ToDo item not found",
             'code': 404,
         }
         return jsonify(response), 404
@@ -819,7 +819,7 @@ def update_react_list_item(list_item_id):
 
     if not list_item.title or not list_item.title.strip():
         response = {
-            'message': f"List item title must not be empty",
+            'message': f"ToDo item title must not be empty",
             'code': 400,
         }
         return jsonify(response), 400
@@ -837,7 +837,7 @@ def update_react_list_item(list_item_id):
 
     response = {
         'data': list_item_short_schema.dump(list_item),
-        'message': f"List item #{list_item.id} has been updated",
+        'message': f"ToDo item #{list_item.id} has been updated",
         'code': 200,
     }
     return jsonify(response), 200
@@ -850,7 +850,7 @@ def delete_react_list_item(list_item_id):
 
     if not list_item:
         response = {
-            'message': f"List item not found",
+            'message': f"ToDo item not found",
             'code': 404,
         }
         return jsonify(response), 404
@@ -866,7 +866,7 @@ def delete_react_list_item(list_item_id):
 
     response = {
         'data': list_item_short_schema.dump(list_item),
-        'message': f"List item #{list_item.id} has been deleted",
+        'message': f"ToDo item #{list_item.id} has been deleted",
         'code': 200,
     }
     return jsonify(response), 200
