@@ -730,3 +730,144 @@ def setListItemPosition(list, previous_list_item_id):
                 return (previous_list_item.position + next_list_item.position) / 2
             else:
                 return previous_list_item.position + 1
+
+
+# React API
+app.config['WTF_CSRF_ENABLED'] = False
+
+REACT_USER_NAME = 'ReactUser'
+react_user = User.query.filter_by(username=REACT_USER_NAME).first()
+
+list_item_short_schema = ListItemSchema(exclude=['list_id','updated','is_liked','position', 'created', 'lists'])
+list_items_short_schema = ListItemSchema(exclude=['list_id','updated','is_liked','position', 'created', 'lists'], many=True)
+
+@app.route('/todo/api/react', methods=['GET'])
+def get_react_list_items():
+    list = List.query.filter_by(user_id=react_user.id).first()
+
+    list_items = ListItem.query.filter(ListItem.list_id == list.id).order_by(ListItem.id)
+
+    response = {
+        'data': list_items_short_schema.dump(list_items),
+        'code': 200,
+        'message': f"All list items",
+    }
+    return jsonify(response), 200
+
+
+@app.route('/todo/api/react', methods=['POST'])
+def create_react_list_item():
+    data = request.json
+    list = List.query.filter_by(user_id=react_user.id).first()
+
+    try:
+        list_item = list_item_short_schema.load(data, session=db.session)
+    except (ValidationError, TypeError):
+        response = {
+            'message': f"List item creation validation error, check your data",
+            'code': 400,
+        }
+        return jsonify(response), 400
+
+    if not list_item.title or not list_item.title.strip():
+        response = {
+            'message': f"List item title must not be empty",
+            'code': 400,
+        }
+        return jsonify(response), 400
+
+    list_item.list_id = list.id
+
+    success, message = list_item.create()
+
+    if not success:
+        response = {
+            'message': message,
+            'code': 200,
+        }
+        return jsonify(response), 400
+
+    response = {
+        'data': list_item_short_schema.dump(list_item),
+        'message': f"List item created",
+        'code': 200,
+    }
+    return jsonify(response), 200
+
+
+@app.route('/todo/api/react/<int:list_item_id>', methods=['PUT'])
+def update_react_list_item(list_item_id):
+    data = request.json
+    list = List.query.filter_by(user_id=react_user.id).first()
+    list_item = ListItem.query.filter_by(list_id=list.id, id=list_item_id).first()
+
+    if not list_item:
+        response = {
+            'message': f"List item not found",
+            'code': 404,
+        }
+        return jsonify(response), 404
+
+    try:
+        list_item = list_item_short_schema.load(data, instance=list_item, session=db.session)
+    except (ValidationError, TypeError):
+        response = {
+            'message': f"List updating validation error, check your data",
+            'code': 400,
+        }
+        return jsonify(response), 400
+
+    if not list_item.title or not list_item.title.strip():
+        response = {
+            'message': f"List item title must not be empty",
+            'code': 400,
+        }
+        return jsonify(response), 400
+
+    list_item.title = list_item.title.strip()
+
+    success, message = list_item.update()
+
+    if not success:
+        response = {
+            'message': message,
+            'code': 400,
+        }
+        return jsonify(response), 400
+
+    response = {
+        'data': list_item_short_schema.dump(list_item),
+        'message': f"List item #{list_item.id} has been updated",
+        'code': 200,
+    }
+    return jsonify(response), 200
+
+
+@app.route('/todo/api/react/<int:list_item_id>', methods=['DELETE'])
+def delete_react_list_item(list_item_id):
+    list = List.query.filter_by(user_id=react_user.id).first()
+    list_item = ListItem.query.filter_by(list_id=list.id, id=list_item_id).first()
+
+    if not list_item:
+        response = {
+            'message': f"List item not found",
+            'code': 404,
+        }
+        return jsonify(response), 404
+
+    success, message = list_item.delete()
+
+    if not success:
+        response = {
+            'message': message,
+            'code': 400,
+        }
+        return jsonify(response), 400
+
+    response = {
+        'data': list_item_short_schema.dump(list_item),
+        'message': f"List item #{list_item.id} has been deleted",
+        'code': 200,
+    }
+    return jsonify(response), 200
+
