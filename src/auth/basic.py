@@ -37,7 +37,9 @@ cors = CORS(
                 'http://192.168.0.2:3000',
                 'http://127.0.0.1:3000',
                 'http://localhost:3000',
-                'https://react.infseeker-todo.tk'
+                'https://infseeker.tk',
+                'https://react.infseeker.tk',
+                'https://todo.infseeker.tk',
             ]
         }
     },
