@@ -14,7 +14,7 @@ from ..models.ListItem import *
 from ..auth.basic import *
 
 
-@app.route('/todo/api/lists', methods=['GET'])
+@app.route('/api/lists', methods=['GET'])
 @login_required
 def get_lists():
     user_lists_query = List.query.filter_by(user_id=current_user.id)
@@ -41,7 +41,7 @@ def get_lists():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/lists', methods=['POST'])
+@app.route('/api/lists', methods=['POST'])
 @login_required
 def create_list():
     data = request.json
@@ -101,7 +101,7 @@ def create_list():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/lists/<int:list_id>', methods=['PUT'])
+@app.route('/api/lists/<int:list_id>', methods=['PUT'])
 @login_required
 def update_list(list_id):
     data = request.json
@@ -149,7 +149,7 @@ def update_list(list_id):
     return jsonify(response), 200
 
 
-@app.route('/todo/api/lists/<int:list_id>', methods=['DELETE'])
+@app.route('/api/lists/<int:list_id>', methods=['DELETE'])
 @login_required
 def delete_list(list_id):
     list = List.query.filter((List.id == list_id) & (List.user_id == current_user.id)).first()
@@ -178,7 +178,7 @@ def delete_list(list_id):
     return jsonify(response), 200
 
 
-@app.route('/todo/api/lists/<int:list_id>/share', methods=['PUT'])
+@app.route('/api/lists/<int:list_id>/share', methods=['PUT'])
 @login_required
 def share_list(list_id):
     data = request.json
@@ -251,7 +251,7 @@ def share_list(list_id):
     return jsonify(response), 200
 
 
-@app.route('/todo/api/lists/<int:list_id>/share', methods=['DELETE'])
+@app.route('/api/lists/<int:list_id>/share', methods=['DELETE'])
 @login_required
 def unshare_list(list_id):
     data = request.json
@@ -312,7 +312,7 @@ def unshare_list(list_id):
     return jsonify(response), 200
 
 
-@app.route('/todo/api/lists/<int:list_id>', methods=['GET'])
+@app.route('/api/lists/<int:list_id>', methods=['GET'])
 @login_required
 def get_list(list_id):
     list = List.query.filter(
@@ -344,7 +344,7 @@ def get_list(list_id):
     return jsonify(response), 200
 
 
-@app.route('/todo/api/lists/<int:list_id>', methods=['POST'])
+@app.route('/api/lists/<int:list_id>', methods=['POST'])
 @login_required
 def create_list_item(list_id):
     data = request.json
@@ -403,7 +403,7 @@ def create_list_item(list_id):
     return jsonify(response), 200
 
 
-@app.route('/todo/api/lists/<int:list_id>/<int:list_item_id>', methods=['PUT'])
+@app.route('/api/lists/<int:list_id>/<int:list_item_id>', methods=['PUT'])
 @login_required
 def update_list_item(list_id, list_item_id):
     data = request.json
@@ -470,7 +470,7 @@ def update_list_item(list_id, list_item_id):
     return jsonify(response), 200
 
 
-@app.route('/todo/api/lists/<int:list_id>/<int:list_item_id>', methods=['DELETE'])
+@app.route('/api/lists/<int:list_id>/<int:list_item_id>', methods=['DELETE'])
 @login_required
 def delete_list_item(list_id, list_item_id):
     list = List.query.filter_by(id=list_id).first()
@@ -741,7 +741,7 @@ react_user = User.query.filter_by(username=REACT_USER_NAME).first()
 list_item_short_schema = ListItemSchema(exclude=['list_id', 'is_done', 'updated','is_liked','position', 'created', 'lists'])
 list_items_short_schema = ListItemSchema(exclude=['list_id', 'is_done' ,'updated','is_liked','position', 'created', 'lists'], many=True)
 
-@app.route('/todo/api/react', methods=['GET'])
+@app.route('/api/react', methods=['GET'])
 def get_react_list_items():
     list = List.query.filter_by(user_id=react_user.id).first()
 
@@ -755,7 +755,7 @@ def get_react_list_items():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/react', methods=['POST'])
+@app.route('/api/react', methods=['POST'])
 def create_react_list_item():
     data = request.json
     list = List.query.filter_by(user_id=react_user.id).first()
@@ -795,7 +795,7 @@ def create_react_list_item():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/react/<int:list_item_id>', methods=['PUT'])
+@app.route('/api/react/<int:list_item_id>', methods=['PUT'])
 def update_react_list_item(list_item_id):
     data = request.json
     list = List.query.filter_by(user_id=react_user.id).first()
@@ -843,7 +843,7 @@ def update_react_list_item(list_item_id):
     return jsonify(response), 200
 
 
-@app.route('/todo/api/react/<int:list_item_id>', methods=['DELETE'])
+@app.route('/api/react/<int:list_item_id>', methods=['DELETE'])
 def delete_react_list_item(list_item_id):
     list = List.query.filter_by(user_id=react_user.id).first()
     list_item = ListItem.query.filter_by(list_id=list.id, id=list_item_id).first()

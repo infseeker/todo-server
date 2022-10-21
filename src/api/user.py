@@ -13,7 +13,7 @@ from ..models.User import *
 from ..auth.basic import *
 
 
-@app.route('/todo/api/user/csrf', methods=['GET'])
+@app.route('/api/user/csrf', methods=['GET'])
 def get_csrf():
     token = generate_csrf()
     response = jsonify({'message': f"CSRF cookie set", 'code': 200})
@@ -21,7 +21,7 @@ def get_csrf():
     return response, 200
 
 
-@app.route('/todo/api/user/check-username', methods=['POST'])
+@app.route('/api/user/check-username', methods=['POST'])
 def check_username():
     data = request.json
 
@@ -59,7 +59,7 @@ def check_username():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/check-email', methods=['POST'])
+@app.route('/api/user/check-email', methods=['POST'])
 def check_email():
     data = request.json
 
@@ -95,7 +95,7 @@ def check_email():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/check-password', methods=['POST'])
+@app.route('/api/user/check-password', methods=['POST'])
 def check_password():
     data = request.json
     if not data.get('password'):
@@ -118,7 +118,7 @@ def check_password():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/register', methods=['POST'])
+@app.route('/api/user/register', methods=['POST'])
 def register():
     if (
         check_username()[0].json['code'] == 200
@@ -172,7 +172,7 @@ def register():
             return check_password()
 
 
-@app.route('/todo/api/user/activate', methods=['POST'])
+@app.route('/api/user/activate', methods=['POST'])
 def activate():
     data = request.json
     email = data.get('email')
@@ -239,7 +239,7 @@ def activate():
         return jsonify(response), 404
 
 
-@app.route('/todo/api/user/restore-email', methods=['POST'])
+@app.route('/api/user/restore-email', methods=['POST'])
 def generate_restoration_email():
     data = request.json
     email = data.get('email')
@@ -309,7 +309,7 @@ def generate_restoration_email():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/restore', methods=['POST'])
+@app.route('/api/user/restore', methods=['POST'])
 def restore():
     data = request.json
     email = data.get('email')
@@ -385,7 +385,7 @@ def restore():
         return jsonify(response), 404
 
 
-@app.route('/todo/api/user/login', methods=['POST'])
+@app.route('/api/user/login', methods=['POST'])
 def login():
     data = request.json
     username = data.get('username')
@@ -454,7 +454,7 @@ def login():
     return jsonify(response), 400
 
 
-@app.route('/todo/api/user/session', methods=['GET'])
+@app.route('/api/user/session', methods=['GET'])
 def get_session():
     user = current_user
 
@@ -488,7 +488,7 @@ def get_user_image(image):
         return jsonify(response), 404
 
 
-@app.route('/todo/api/user/image', methods=['PUT'])
+@app.route('/api/user/image', methods=['PUT'])
 @login_required
 def change_user_image():
     data = request.json
@@ -551,7 +551,7 @@ def change_user_image():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/image', methods=['DELETE'])
+@app.route('/api/user/image', methods=['DELETE'])
 @login_required
 def delete_user_image():
     if not current_user.image:
@@ -584,7 +584,7 @@ def delete_user_image():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/password', methods=['PUT'])
+@app.route('/api/user/password', methods=['PUT'])
 @login_required
 def change_password():
     data = request.json
@@ -629,7 +629,7 @@ def change_password():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/locale', methods=['PUT'])
+@app.route('/api/user/locale', methods=['PUT'])
 @login_required
 def change_locale():
     data = request.json
@@ -660,7 +660,7 @@ def change_locale():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/logout', methods=['GET'])
+@app.route('/api/user/logout', methods=['GET'])
 @login_required
 def logout():
     logout_user()
@@ -668,7 +668,7 @@ def logout():
     return jsonify(response), 200
 
 
-@app.route('/todo/api/user/delete', methods=['DELETE'])
+@app.route('/api/user/delete', methods=['DELETE'])
 @login_required
 def delete():
     data = request.json

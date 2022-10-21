@@ -68,7 +68,7 @@ scheduler.start()
 
 
 # init websocket
-socketio = SocketIO(app, path='/todo/api/lists/shared', cors_allowed_origins='*')
+socketio = SocketIO(app, path='/api/lists/shared', cors_allowed_origins='*')
 
 
 # handler for all unhandled 400's code error exceptions
@@ -98,11 +98,11 @@ def index():
     return jsonify(response), 200
 
 
-@app.route('/todo/api', methods=['GET'])
+@app.route('/api', methods=['GET'])
 def api():
     response = {
         'message': "ToDo Project API",
-        'path': '/todo/api',
+        'path': '/api',
         'data': {'action': 'api'},
         'code': 200,
     }

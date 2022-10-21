@@ -36,7 +36,7 @@ class DefaultModelView(ModelView):
         super().__init__(*args, **kwargs)
 
     page_size = 50
-    extra_css = ['/todo/api/admin/static/admin.css']
+    extra_css = ['/api/admin/static/admin.css']
 
     def is_accessible(self):
         return current_user.is_authenticated and current_user.admin
@@ -47,7 +47,7 @@ class DefaultModelView(ModelView):
 
 @login_required
 @admin.require(403)
-@app.route('/todo/api/admin/static/admin.css', methods=['GET'])
+@app.route('/api/admin/static/admin.css', methods=['GET'])
 def get_admin_css():
     path = os.path.join(os.path.dirname(os.path.abspath(__file__)), '../static/')
     return send_from_directory(path, 'admin.css')
@@ -230,10 +230,10 @@ class ListItemView(DefaultModelView):
 
 admin = Admin(
     app,
-    url="/todo/api/admin",
+    url="/api/admin",
     name='Todo',
     template_mode='bootstrap3',
-    index_view=MyAdminIndexView(url='/todo/api/admin'),
+    index_view=MyAdminIndexView(url='/api/admin'),
 )
 
 admin.add_link(MenuLink(name='Profile', category='', url='/profile'))
